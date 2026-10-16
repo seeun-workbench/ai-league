@@ -526,7 +526,8 @@ def decide_llm(client, usage, d, model, pid, p, table, stats, equity, news=None)
     # 일부 모델(Fable 등)은 도구 강제 지정(tool_choice tool/any)을 지원하지 않아 auto로 두고,
     # 도구를 안 쓰고 끝나면 한 번 더 요청한다.
     system = (PLAYERS[pid]["persona"]
-              + " 답할 때는 반드시 submit_orders 도구를 정확히 한 번 호출해서 결정을 제출한다.")
+              + " 답할 때는 반드시 submit_orders 도구를 정확히 한 번 호출해서 결정을 제출한다."
+              " 일기와 근거에서 단어를 가운뎃점(·)으로 잇지 말고 쉼표를 쓴다.")
     msgs = [{"role": "user", "content": build_prompt(pid, p, table, stats, d, equity, news)}]
     for _ in range(2):
         resp = call_claude(client, usage, d, model, max_tokens=4000, system=system,
@@ -633,8 +634,8 @@ def run_day(st, data, d, client=None, dry=False):
                        "diary": "(오늘은 판단 실패)"}
         targets = None if dec.get("keep_current") else clean_targets(dec.get("targets"))
         p["pending"] = targets
-        p["journal"].append({"date": d.isoformat(), "diary": dec.get("diary", ""),
-                             "reason": dec.get("reason", ""), "targets": targets,
+        p["journal"].append({"date": d.isoformat(), "diary": dec.get("diary", "").replace("·", ", "),
+                             "reason": dec.get("reason", "").replace("·", ", "), "targets": targets,
                              "model": model, "research": note})
         p["journal"] = p["journal"][-JOURNAL_KEEP:]
     usage.setdefault(days_key, [])
