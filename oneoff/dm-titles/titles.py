@@ -29,6 +29,8 @@ WORKERS = int(os.environ.get("TITLES_WORKERS", "4"))
 TODAY = datetime.now(ZoneInfo("Asia/Seoul")).strftime("%Y%m%d")
 OUT = HERE / "out" / f"s99titles{TODAY}.json"
 REPORT = HERE / "out" / "report.json"
+PARTIAL = HERE / "out" / "partial.jsonl"   # 한 건 끝날 때마다 한 줄씩 저장, 다시 돌리면 이어서 함
+DEADLINE_MIN = float(os.environ.get("TITLES_DEADLINE_MIN", "100"))  # 이 시간이 지나면 새 작업을 멈추고 정리
 
 # 로그인이 필요하거나 만료된 파일 링크라 제목을 알 수 없는 곳
 SKIP = ("blackboard.unist.ac.kr", "drive.google.com", "docs.google.com", "colab.research.google.com",
@@ -128,7 +130,7 @@ def ask_claude(url: str, info: dict) -> dict:
     need_search = not (info["title"] or info["og"]) or info["src"].startswith(("http", "error"))
     kw = {}
     if need_search or info["src"] == "fetch" and len(info["text"]) < 200:
-        kw["tools"] = [{"type": "web_search_20250305", "name": "web_search", "max_uses": 3}]
+        kw["tools"] = [{"type": "web_search_20250305", "name": "web_search", "max_uses": 2}]
     msgs = [{"role": "user", "content": PROMPT.format(url=url, **{k: (v or "(없음)")[:2500] for k, v in info.items()})}]
     usage = {"in": 0, "out": 0, "search": 0}
     resp = None
@@ -171,22 +173,41 @@ def main():
     limit = int(sys.argv[1]) if len(sys.argv) > 1 else len(items)
     items = items[:limit]
     results, t0 = {}, time.time()
-    with ThreadPoolExecutor(WORKERS) as ex:
-        futs = [ex.submit(work, it) for it in items]
+    OUT.parent.mkdir(exist_ok=True)
+    if PARTIAL.exists():
+        for line in PARTIAL.read_text().splitlines():
+            if line.strip():
+                rec = json.loads(line)
+                results[rec["url"]] = rec["res"]
+    todo = [it for it in items if it["u"] not in results]
+    print(f"이전 결과 {len(results)}개, 남은 링크 {len(todo)}개", flush=True)
+    stop = False
+
+    def guarded(it):
+        if stop or (time.time() - t0) / 60 > DEADLINE_MIN:
+            return it["u"], None
+        return work(it)
+
+    with ThreadPoolExecutor(WORKERS) as ex, PARTIAL.open("a") as pf:
+        futs = [ex.submit(guarded, it) for it in todo]
         for i, f in enumerate(as_completed(futs), 1):
             url, res = f.result()
+            if res is None:
+                stop = True
+                continue
             results[url] = res
-            print(f"[{i}/{len(items)}] {'OK ' if res.get('title') else '-- '} {url[:90]} | {res.get('title', '')[:60]}",
+            pf.write(json.dumps({"url": url, "res": res}, ensure_ascii=False) + "\n")
+            pf.flush()
+            print(f"[{i}/{len(todo)}] {'OK ' if res.get('title') else '-- '} {url[:90]} | {res.get('title', '')[:60]}",
                   flush=True)
     titles = {u: {"title": r["title"], "desc": r["desc"]} for u, r in results.items() if r.get("title")}
-    OUT.parent.mkdir(exist_ok=True)
     OUT.write_text(json.dumps(titles, ensure_ascii=False, indent=1))
     tot = {"in": 0, "out": 0, "search": 0}
     for r in results.values():
         for k in tot:
             tot[k] += r.get("usage", {}).get(k, 0)
     cost = tot["in"] / 1e6 * 10 + tot["out"] / 1e6 * 50 + tot["search"] * 0.01  # Fable 5.1 기준 추정
-    REPORT.write_text(json.dumps({"model": MODEL, "total": len(items), "found": len(titles),
+    REPORT.write_text(json.dumps({"model": MODEL, "total": len(items), "done": len(results), "found": len(titles),
                                   "minutes": round((time.time() - t0) / 60, 1), "usage": tot,
                                   "cost_usd_est": round(cost, 2),
                                   "missing": {u: {k: r.get(k) for k in ("note", "src")}

@@ -11,10 +11,14 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: dm-titles
+  cancel-in-progress: true
+
 jobs:
   run:
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 115
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -24,6 +28,7 @@ jobs:
       - name: 제목 조회
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          TITLES_DEADLINE_MIN: "95"
         run: python oneoff/dm-titles/titles.py
       - name: 결과 저장
         if: always()
