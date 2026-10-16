@@ -23,9 +23,10 @@ Claude 일곱 명(가치투자자, 추세 추종자, 뉴스 헌터, 역발상, �
    - 첫날은 주문만 내고, 다음 거래일부터 체결이 시작돼요
 
 ## 비용 (한 달 약 100달러에 맞춤)
-- 모델: Claude Fable 5.1 (`LEAGUE_MODEL`로 변경 가능)
-- 선수마다 매일 웹 검색 최대 5회로 각자 조사한 뒤 판단 (`LEAGUE_SEARCH_MAX`)
-- 예상: 거래일 하루 4달러 안팎, 한 달 약 85~100달러
+- 조사: Claude Opus 5.5가 선수마다 웹 검색 최대 5회 (`LEAGUE_RESEARCH_MODEL`, `LEAGUE_SEARCH_MAX`)
+- 판단: Claude Fable 5.1 (`LEAGUE_MODEL`)
+- 예상: 거래일 하루 4~5달러, 한 달 약 90~100달러
+- 장 마감(15:50) 전에 실행되면 아무것도 하지 않고 끝나요
 - **안전장치**: 이번 달 사용액이 `LEAGUE_MONTHLY_BUDGET`(기본 100달러)에 가까워지면
   Sonnet으로 내리고 조사를 생략, 다 쓰면 그달 남은 날은 보유만 유지
 - 페이지 맨 아래에 이번 달 사용액이 표시돼요. 정확한 금액은 Claude Console의 Usage에서 확인

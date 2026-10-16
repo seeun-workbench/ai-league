@@ -38,7 +38,9 @@ KST = ZoneInfo("Asia/Seoul")
 # ---------------------------------------------------------------------------
 # 설정
 # ---------------------------------------------------------------------------
-MODEL = os.environ.get("LEAGUE_MODEL", "claude-fable-5-1")
+MODEL = os.environ.get("LEAGUE_MODEL", "claude-fable-5-1")                    # 매매 판단
+RESEARCH_MODEL = os.environ.get("LEAGUE_RESEARCH_MODEL", "claude-opus-5-5")  # 웹 조사(검색 결과가 길어서 입력 토큰이 큼)
+MARKET_CLOSE_READY = (15, 50)  # 이 시각(KST) 이후에만 그날 시세를 종가로 인정
 FALLBACK_MODEL = "claude-sonnet-5-5"   # 예산이 빠듯하면 이 모델로 내려감
 MONTHLY_BUDGET = float(os.environ.get("LEAGUE_MONTHLY_BUDGET", "100"))  # 달러
 SEARCH_MAX = int(os.environ.get("LEAGUE_SEARCH_MAX", "5"))             # 선수당 하루 웹 검색 수
@@ -454,17 +456,20 @@ def research(client, usage, d, model, pid):
 
 
 def decide_llm(client, usage, d, model, pid, p, table, stats, equity, news=None):
-    prompt = build_prompt(pid, p, table, stats, d, equity, news)
-    resp = call_claude(
-        client, usage, d, model, max_tokens=1500,
-        system=PLAYERS[pid]["persona"],
-        tools=[SUBMIT_TOOL], tool_choice={"type": "tool", "name": "submit_orders"},
-        messages=[{"role": "user", "content": prompt}],
-    )
-    for b in resp.content:
-        if b.type == "tool_use" and b.name == "submit_orders":
-            return b.input
-    return {"keep_current": True, "targets": [], "reason": "응답 오류로 유지", "diary": "(응답 없음)"}
+    # 일부 모델(Fable 등)은 도구 강제 지정(tool_choice tool/any)을 지원하지 않아 auto로 두고,
+    # 도구를 안 쓰고 끝나면 한 번 더 요청한다.
+    system = (PLAYERS[pid]["persona"]
+              + " 답할 때는 반드시 submit_orders 도구를 정확히 한 번 호출해서 결정을 제출한다.")
+    msgs = [{"role": "user", "content": build_prompt(pid, p, table, stats, d, equity, news)}]
+    for _ in range(2):
+        resp = call_claude(client, usage, d, model, max_tokens=4000, system=system,
+                           tools=[SUBMIT_TOOL], messages=msgs)
+        for b in resp.content:
+            if b.type == "tool_use" and b.name == "submit_orders":
+                return b.input
+        msgs = msgs + [{"role": "assistant", "content": resp.content},
+                       {"role": "user", "content": "submit_orders 도구로 결정을 제출해줘."}]
+    return {"keep_current": True, "targets": [], "reason": "도구 호출 없이 끝나 유지", "diary": "(응답 없음)"}
 
 
 def decide_mock(pid, p, stats, d):
@@ -553,7 +558,7 @@ def run_day(st, data, d, client=None, dry=False):
         else:
             try:
                 if do_research:
-                    note = research(client, usage, d, model, pid)
+                    note = research(client, usage, d, RESEARCH_MODEL, pid)
                 dec = decide_llm(client, usage, d, model, pid, p, table, stats, eq, note)
             except Exception as e:  # 한 선수 오류로 리그 전체가 멈추지 않게
                 print(f"{pid} 오류:", e)
@@ -802,7 +807,11 @@ def main():
         sys.exit("시세를 받지 못했어요.")
     last = max(data[BENCH].index)
     st = load_state(last)
+    now = datetime.now(KST)
     if not a.force:
+        if last == today and (now.hour, now.minute) < MARKET_CLOSE_READY:
+            print(f"장이 아직 안 끝났어요({now:%H:%M}). 15:50 이후에 실행돼야 해요.")
+            return
         if last != today:
             print(f"오늘({today})은 휴장일이거나 시세가 아직 없어요. 마지막 거래일 {last}")
             return
