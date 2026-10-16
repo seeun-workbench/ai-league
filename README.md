@@ -1,0 +1,37 @@
+# AI 투자 리그
+
+Claude 일곱 명(가치투자자, 추세 추종자, 뉴스 헌터, 역발상, 반도체 전문, 바이오 전문, 배당 방어형)과 랜덤 원숭이가 가상 1천만 원으로
+한국 대형주 20개를 모의 매매합니다. KOSPI200 지수(KODEX 200 보유)가 비교 기준이에요.
+실제 돈은 들어가지 않고, 결과는 구경용이에요.
+
+## 진행 방식
+- 평일 16:40(KST)에 GitHub Actions가 자동 실행
+- 어제 낸 주문을 **오늘 시가**에 체결하고, 오늘 종가로 평가한 뒤, 각 선수가 내일 주문을 냄
+- 매도 시 수수료와 거래세로 약 0.2% 비용 반영
+- 휴장일은 자동으로 건너뜀
+- 결과: `docs/index.html` (GitHub Pages로 보기), 슬랙 알림(선택)
+
+## 처음 설정 (10분)
+1. GitHub에서 새 저장소를 만들고 이 폴더 내용을 그대로 올리기
+2. 저장소 **Settings > Secrets and variables > Actions**
+   - Secrets에 `ANTHROPIC_API_KEY` 추가 (Claude Console에서 발급한 키)
+   - (선택) Secrets에 `SLACK_WEBHOOK_URL` 추가: 슬랙 Incoming Webhook 주소
+3. **Settings > Pages**: Source를 `Deploy from a branch`, 브랜치 `main`, 폴더 `/docs`로
+   - 페이지 주소가 나오면 Variables에 `LEAGUE_PAGE_URL`로 넣기 (슬랙 알림에 링크가 붙음)
+   - 무료 계정은 공개 저장소에서만 Pages가 돼요. 키는 Secrets에만 있으니 공개해도 괜찮아요
+4. **Actions** 탭에서 워크플로를 켜고 `Run workflow`로 한 번 수동 실행
+   - 첫날은 주문만 내고, 다음 거래일부터 체결이 시작돼요
+
+## 비용 (한 달 약 100달러에 맞춤)
+- 모델: Claude Fable 5.1 (`LEAGUE_MODEL`로 변경 가능)
+- 선수마다 매일 웹 검색 최대 5회로 각자 조사한 뒤 판단 (`LEAGUE_SEARCH_MAX`)
+- 예상: 거래일 하루 4달러 안팎, 한 달 약 85~100달러
+- **안전장치**: 이번 달 사용액이 `LEAGUE_MONTHLY_BUDGET`(기본 100달러)에 가까워지면
+  Sonnet으로 내리고 조사를 생략, 다 쓰면 그달 남은 날은 보유만 유지
+- 페이지 맨 아래에 이번 달 사용액이 표시돼요. 정확한 금액은 Claude Console의 Usage에서 확인
+
+## 손볼 곳
+- 종목: `league.py`의 `UNIVERSE`
+- 선수 성격: `PLAYERS`의 `persona` (새 선수를 추가해도 돼요)
+- 처음부터 다시: `python league.py --reset --force`
+- API 없이 미리보기: `python league.py --dry-run` → `docs/dry_run.html`

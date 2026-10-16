@@ -1,0 +1,37 @@
+name: AI 투자 리그
+
+on:
+  schedule:
+    - cron: "40 7 * * 1-5"   # 평일 16:40 KST (GitHub 사정으로 몇 분~수십 분 늦게 돌 수 있음)
+  workflow_dispatch: {}      # Actions 탭에서 수동 실행 버튼
+
+permissions:
+  contents: write
+
+concurrency:
+  group: league
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: 리그 하루 진행
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          LEAGUE_PAGE_URL: ${{ vars.LEAGUE_PAGE_URL }}
+        run: python league.py
+      - name: 결과 저장
+        run: |
+          git config user.name "league-bot"
+          git config user.email "league-bot@users.noreply.github.com"
+          git add state/state.json docs/index.html || true
+          git diff --cached --quiet || git commit -m "리그 $(TZ=Asia/Seoul date +%F)"
+          git push
