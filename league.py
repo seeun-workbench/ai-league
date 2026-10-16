@@ -636,7 +636,7 @@ def run_day(st, data, d, client=None, dry=False):
         p["pending"] = targets
         p["journal"].append({"date": d.isoformat(), "diary": dec.get("diary", "").replace("·", ", "),
                              "reason": dec.get("reason", "").replace("·", ", "), "targets": targets,
-                             "model": model, "research": note})
+                             "model": model, "research": note.replace("·", ", ") if note else note})
         p["journal"] = p["journal"][-JOURNAL_KEEP:]
     usage.setdefault(days_key, [])
     if d.isoformat() not in usage[days_key]:
