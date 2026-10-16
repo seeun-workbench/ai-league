@@ -117,7 +117,7 @@ PLAYERS = {
         "color": "#2F6B4F",
         "persona": (
             "당신은 장기 가치투자자다. 많이 빠졌지만 사업이 튼튼한 대형주를 싸게 사서 오래 들고 간다. "
-            "매매는 드물게 한다. 특별한 이유가 없으면 keep_current를 true로 둔다. "
+            "매매는 드물게 한다. 특별한 이유가 없으면 지금 포트폴리오를 그대로 유지한다. "
             "단기 등락에 흔들리지 않고, 3~6종목에 나눠 담는다."
         ),
         "research": "보유 종목과 관심 종목의 최근 실적, PER, PBR, 배당, 재무 건전성 관련 소식",
@@ -509,18 +509,30 @@ def research(client, usage, d, model, pid):
     focus = PLAYERS[pid].get("research", "오늘 한국 증시 주요 뉴스")
     msgs = [{"role": "user", "content":
              f"{d.isoformat()} 기준으로 웹에서 다음을 조사해서 15줄 이내로 정리해줘: {focus}. "
-             f"관련 종목명을 꼭 붙이고, 확인한 사실과 추측을 구분해. 거래 가능 종목: {names}"}]
+             f"관련 종목명을 꼭 붙이고, 확인한 사실과 추측을 구분해. 거래 가능 종목: {names}. "
+             "이 단계는 조사만 한다. 매수, 매도, 유지 같은 결정이나 비중 제안은 쓰지 말고, "
+             "변수 이름이나 코드 같은 프로그램 용어도 쓰지 마."}]
     tools = [{"type": "web_search_20250305", "name": "web_search", "max_uses": month_setting(d, "search_max", SEARCH_MAX),
               "user_location": {"type": "approximate", "country": "KR", "timezone": "Asia/Seoul"}}]
-    resp = None
-    for _ in range(3):
-        resp = call_claude(client, usage, d, model, max_tokens=2500,
+    resp, parts = None, []
+    for _ in range(4):
+        resp = call_claude(client, usage, d, model, max_tokens=8000,
                            system=PLAYERS[pid]["persona"], tools=tools, messages=msgs)
+        # 검색 전 "찾아볼게요" 같은 말은 버리고, 마지막 검색 결과 뒤에 나온 정리만 모은다
+        chunk = []
+        for b in resp.content:
+            if b.type == "web_search_tool_result":
+                chunk, parts = [], []
+            elif b.type == "text":
+                chunk.append(b.text)
+        parts.extend(chunk)
         if resp.stop_reason != "pause_turn":
             break
         msgs = msgs + [{"role": "assistant", "content": resp.content}]
-    text = "".join(b.text for b in resp.content if b.type == "text").strip()
-    return text[-4000:] or "조사 결과 없음"
+    text = "".join(parts).strip()
+    if resp.stop_reason == "max_tokens":
+        text += "\n(길이 제한으로 여기까지)"
+    return text or "조사 결과 없음"
 
 
 def decide_llm(client, usage, d, model, pid, p, table, stats, equity, news=None):
