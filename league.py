@@ -21,6 +21,7 @@ import json
 import math
 import os
 import random
+import re
 import sys
 import urllib.request
 from datetime import date, datetime, timedelta
@@ -648,6 +649,21 @@ def run_day(st, data, d, client=None, dry=False):
 # 페이지
 # ---------------------------------------------------------------------------
 
+def md(s):
+    """조사 노트, 일기의 간단한 마크다운(굵게, 기울임, 코드, 제목, 목록)을 HTML로."""
+    out = []
+    for line in esc(s or "").split("\n"):
+        line = re.sub(r"\*\*(.+?)\*\*", r"<b>\1</b>", line)
+        line = re.sub(r"(?<![*\w])\*(?!\s)(.+?)(?<!\s)\*(?![*\w])", r"<i>\1</i>", line)
+        line = re.sub(r"`([^`]+)`", r"<code>\1</code>", line)
+        m = re.match(r"^\s*#{1,6}\s+(.*)$", line)
+        if m:
+            line = f"<b>{m.group(1)}</b>"
+        line = re.sub(r"^(\s*)[-*]\s+", r"\1• ", line)
+        out.append(line)
+    return "\n".join(out)
+
+
 def esc(s):
     return (str(s).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;"))
 
@@ -737,11 +753,11 @@ def render(st, data=None):
             ", ".join(f"{UNIVERSE[t]} {w:.0f}%" for t, w in plan.items()) or "전부 현금")
         cards.append(
             f'<article class="card" style="--c:{pl["color"]}"><h3>{esc(pl["name"])}</h3>'
-            f'<p class="diary">“{esc(j.get("diary", ""))}”</p>'
-            f'<p class="reason">{esc(j.get("reason", ""))}</p>'
+            f'<p class="diary">“{md(j.get("diary", ""))}”</p>'
+            f'<p class="reason">{md(j.get("reason", ""))}</p>'
             f'<div class="k">보유</div><ul>{"".join(hold)}</ul>'
             f'<div class="k">내일 계획</div><p class="plan">{esc(plan_txt)}</p>'
-            + (f'<details><summary>오늘 조사 노트</summary><p class="note">{esc(j["research"])}</p></details>'
+            + (f'<details><summary>오늘 조사 노트</summary><p class="note">{md(j["research"])}</p></details>'
                if j.get("research") else "")
             + '</article>')
 
@@ -794,7 +810,7 @@ svg{{width:100%;height:auto;display:block}} .grid{{stroke:var(--line)}} .zero{{s
 .reason{{margin-top:6px;font-size:13px;color:var(--sub)}} .k{{margin-top:12px;font-size:12px;font-weight:700;color:var(--muted)}}
 .card ul{{list-style:none;font-size:13.5px;margin-top:2px}} .plan{{font-size:13.5px}}
 details{{margin-top:10px;font-size:13px}} summary{{cursor:pointer;color:var(--sub);font-weight:700}}
-.note{{white-space:pre-wrap;margin-top:6px;color:var(--sub);font-size:12.5px}}
+.note{{white-space:pre-wrap;margin-top:6px;color:var(--sub);font-size:12.5px}} .note b{{color:var(--ink)}} code{{font-size:.95em;background:var(--line);padding:0 3px;border-radius:3px}}
 .trades td{{font-size:13px;padding:7px 4px;white-space:nowrap}} .short{{display:none}}
 @media (max-width:520px){{.full{{display:none}} .short{{display:inline}} .hide-m{{display:none}} h1{{font-size:20px}}}}
 footer{{margin-top:36px;padding-top:12px;border-top:3px solid var(--ink);font-size:12.5px;color:var(--muted)}}
