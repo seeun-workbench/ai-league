@@ -44,6 +44,15 @@ MARKET_CLOSE_READY = (15, 50)  # 이 시각(KST) 이후에만 그날 시세를 �
 FALLBACK_MODEL = "claude-sonnet-5-5"   # 예산이 빠듯하면 이 모델로 내려감
 MONTHLY_BUDGET = float(os.environ.get("LEAGUE_MONTHLY_BUDGET", "100"))  # 달러
 SEARCH_MAX = int(os.environ.get("LEAGUE_SEARCH_MAX", "5"))             # 선수당 하루 웹 검색 수
+# 특정 달만 예산과 강도를 바꾸고 싶을 때. 2026-10은 남은 크레딧을 다 쓰는 집중 모드
+# (리그 밖에서 이미 쓴 6.5달러를 빼고 193달러)
+MONTH_OVERRIDES = {
+    "2026-10": {"budget": 193.0, "research_model": "claude-fable-5-1", "search_max": 8},
+}
+
+
+def month_setting(d, key, default):
+    return MONTH_OVERRIDES.get(d.strftime("%Y-%m"), {}).get(key, default)
 TRADING_DAYS_PER_MONTH = 21
 # 100만 토큰당 달러 (입력, 출력). 바뀌면 여기만 고치면 됨
 PRICES = {
@@ -162,6 +171,39 @@ PLAYERS = {
             "선호하고, 시장이 불안하면 현금을 늘린다. 매매는 적게 한다."
         ),
         "research": "금리, 환율, 배당 정책, 밸류업 프로그램, 은행과 보험, 통신사 관련 소식",
+    },
+    "flow": {
+        "name": "수급 추종자 강수급",
+        "short": "강수급",
+        "kind": "llm",
+        "color": "#A0522D",
+        "persona": (
+            "당신은 외국인과 기관 수급을 따라가는 투자자다. 큰손이 며칠째 사는 종목을 따라 사고, "
+            "큰손이 팔기 시작하면 먼저 뺀다. 2~5종목."
+        ),
+        "research": "오늘과 최근 며칠 외국인, 기관 순매수와 순매도 상위 종목, 프로그램 매매 동향",
+    },
+    "macro": {
+        "name": "거시경제 박사 윤매크로",
+        "short": "윤매크로",
+        "kind": "llm",
+        "color": "#4A5A86",
+        "persona": (
+            "당신은 금리, 환율, 미국 증시, 유가 같은 거시 변수로 업종을 고르는 투자자다. "
+            "환율이 오르면 수출주, 금리가 오르면 금융주처럼 큰 흐름에 맞춰 비중을 조절한다. 3~6종목."
+        ),
+        "research": "미국 증시 마감, 미국 국채 금리, 원달러 환율, 유가, 한국은행과 연준 관련 최신 소식",
+    },
+    "chart": {
+        "name": "차트 장인 서캔들",
+        "short": "서캔들",
+        "kind": "llm",
+        "color": "#9C3D6B",
+        "persona": (
+            "당신은 차트만 믿는 기술적 분석가다. 이동평균, 신고가 돌파, 과매수와 과매도, 거래량 급증을 보고 "
+            "짧게 사고판다. 손절은 -5%. 2~4종목."
+        ),
+        "research": "대형주들의 기술적 신호(골든크로스, 신고가 돌파, RSI 과매수와 과매도, 거래량 급증) 관련 오늘 시황 기사",
     },
     "monkey": {
         "name": "원숭이 랜덤",
@@ -409,9 +451,10 @@ def month_cost(usage, d):
 def pick_model(usage, d):
     """이번 달 남은 예산과 남은 거래일을 보고 모델과 조사 여부를 정한다."""
     spent = month_cost(usage, d)
-    if spent >= MONTHLY_BUDGET:
+    budget = month_setting(d, "budget", MONTHLY_BUDGET)
+    if spent >= budget:
         return None, False                      # 예산 소진: 오늘은 판단 쉼(보유 유지)
-    remaining = MONTHLY_BUDGET - spent
+    remaining = budget - spent
     days_left = max(1, TRADING_DAYS_PER_MONTH - len(usage.get("days_" + d.strftime("%Y-%m"), [])))
     if remaining / days_left < 1.0:             # 하루 1달러도 안 남으면 싼 모델, 조사 생략
         return FALLBACK_MODEL, False
@@ -442,7 +485,7 @@ def research(client, usage, d, model, pid):
     msgs = [{"role": "user", "content":
              f"{d.isoformat()} 기준으로 웹에서 다음을 조사해서 15줄 이내로 정리해줘: {focus}. "
              f"관련 종목명을 꼭 붙이고, 확인한 사실과 추측을 구분해. 거래 가능 종목: {names}"}]
-    tools = [{"type": "web_search_20250305", "name": "web_search", "max_uses": SEARCH_MAX,
+    tools = [{"type": "web_search_20250305", "name": "web_search", "max_uses": month_setting(d, "search_max", SEARCH_MAX),
               "user_location": {"type": "approximate", "country": "KR", "timezone": "Asia/Seoul"}}]
     resp = None
     for _ in range(3):
@@ -558,7 +601,7 @@ def run_day(st, data, d, client=None, dry=False):
         else:
             try:
                 if do_research:
-                    note = research(client, usage, d, RESEARCH_MODEL, pid)
+                    note = research(client, usage, d, month_setting(d, "research_model", RESEARCH_MODEL), pid)
                 dec = decide_llm(client, usage, d, model, pid, p, table, stats, eq, note)
             except Exception as e:  # 한 선수 오류로 리그 전체가 멈추지 않게
                 print(f"{pid} 오류:", e)
@@ -739,7 +782,7 @@ footer{{margin-top:36px;padding-top:12px;border-top:3px solid var(--ink);font-si
 <h2>선수별 오늘</h2><div class="cards">{"".join(cards)}</div>
 <h2>최근 거래</h2><table class="trades">{trows}</table>
 <footer>{st["start_date"]} 시작. 주문은 다음 거래일 시가에 체결, 매도 시 약 0.2% 비용 반영.<br>
-이번 달 API 사용액 약 ${month_cost(u, date.fromisoformat(st["last_date"])) if st["last_date"] else 0:.2f} / ${MONTHLY_BUDGET:.0f}.
+이번 달 API 사용액 약 ${month_cost(u, date.fromisoformat(st["last_date"])) if st["last_date"] else 0:.2f} / ${month_setting(date.fromisoformat(st["last_date"]), "budget", MONTHLY_BUDGET) if st["last_date"] else MONTHLY_BUDGET:.0f}.
 누적 ${u["cost_usd"]:.2f}, 입력 {u["input_tokens"]:,} 토큰, 출력 {u["output_tokens"]:,} 토큰, 웹 검색 {u["web_searches"]}회.</footer>
 </div></body></html>"""
     PAGE_PATH.parent.mkdir(parents=True, exist_ok=True)
