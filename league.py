@@ -44,15 +44,30 @@ MARKET_CLOSE_READY = (15, 50)  # 이 시각(KST) 이후에만 그날 시세를 �
 FALLBACK_MODEL = "claude-sonnet-5-5"   # 예산이 빠듯하면 이 모델로 내려감
 MONTHLY_BUDGET = float(os.environ.get("LEAGUE_MONTHLY_BUDGET", "100"))  # 달러
 SEARCH_MAX = int(os.environ.get("LEAGUE_SEARCH_MAX", "5"))             # 선수당 하루 웹 검색 수
-# 특정 달만 예산과 강도를 바꾸고 싶을 때. 2026-10은 남은 크레딧을 다 쓰는 집중 모드
-# (리그 밖에서 이미 쓴 6.5달러를 빼고 193달러)
-MONTH_OVERRIDES = {
-    "2026-10": {"budget": 193.0, "research_model": "claude-fable-5-1", "search_max": 8},
-}
+# 크레딧 구간. 프로모션 크레딧마다 만료일이 달라서, 구간별로 예산과 강도를 정한다.
+# end는 그 크레딧으로 마지막 실행할 날(KST). 구간이 없는 날은 Claude를 부르지 않고 보유만 유지.
+CREDIT_WINDOWS = [
+    # 10/18(UTC) 만료 크레딧 93.5달러: 남은 거래일이 10/16 하루뿐이라 최대 강도로
+    {"id": "promo-1018", "start": "2026-10-16", "end": "2026-10-17", "budget": 90.0,
+     "research_model": "claude-fable-5-1", "search_max": 10},
+    # 11/18(UTC) 만료 크레딧 100달러: 약 22거래일에 나눠 쓰기
+    {"id": "promo-1118", "start": "2026-10-18", "end": "2026-11-17", "budget": 97.0,
+     "research_model": "claude-opus-5-5", "search_max": 5},
+]
+
+
+def window_for(d):
+    for w in CREDIT_WINDOWS:
+        if w["start"] <= d.isoformat() <= w["end"]:
+            return w
+    return None
 
 
 def month_setting(d, key, default):
-    return MONTH_OVERRIDES.get(d.strftime("%Y-%m"), {}).get(key, default)
+    w = window_for(d)
+    return w.get(key, default) if w else default
+
+
 TRADING_DAYS_PER_MONTH = 21
 # 100만 토큰당 달러 (입력, 출력). 바뀌면 여기만 고치면 됨
 PRICES = {
@@ -444,18 +459,27 @@ def build_prompt(pid, p, table, stats, d, equity, news=None):  # news = 내 조�
     return "\n".join(parts)
 
 
+def spend_key(d):
+    w = window_for(d)
+    return w["id"] if w else d.strftime("%Y-%m")
+
+
 def month_cost(usage, d):
-    return usage["by_month"].get(d.strftime("%Y-%m"), 0.0)
+    """지금 크레딧 구간에서 쓴 금액(구간 밖이면 그달)."""
+    return usage["by_month"].get(spend_key(d), 0.0)
 
 
 def pick_model(usage, d):
-    """이번 달 남은 예산과 남은 거래일을 보고 모델과 조사 여부를 정한다."""
+    """지금 크레딧 구간의 남은 예산과 남은 거래일을 보고 모델과 조사 여부를 정한다."""
+    w = window_for(d)
+    if w is None:
+        return None, False                      # 쓸 크레딧이 없는 날: 판단 쉼(보유 유지)
     spent = month_cost(usage, d)
-    budget = month_setting(d, "budget", MONTHLY_BUDGET)
+    budget = w["budget"]
     if spent >= budget:
-        return None, False                      # 예산 소진: 오늘은 판단 쉼(보유 유지)
+        return None, False                      # 예산 소진
     remaining = budget - spent
-    days_left = max(1, TRADING_DAYS_PER_MONTH - len(usage.get("days_" + d.strftime("%Y-%m"), [])))
+    days_left = max(1, len(pd.bdate_range(d, date.fromisoformat(w["end"]))))
     if remaining / days_left < 1.0:             # 하루 1달러도 안 남으면 싼 모델, 조사 생략
         return FALLBACK_MODEL, False
     return MODEL, True
@@ -474,7 +498,7 @@ def call_claude(client, usage, d, model, **kw):
     pin, pout = PRICES.get(model, PRICES["claude-fable-5-1"])
     cost = it / 1e6 * pin + ot / 1e6 * pout + searches * SEARCH_PRICE
     usage["cost_usd"] += cost
-    key = d.strftime("%Y-%m")
+    key = spend_key(d)
     usage["by_month"][key] = usage["by_month"].get(key, 0.0) + cost
     return resp
 
@@ -596,8 +620,8 @@ def run_day(st, data, d, client=None, dry=False):
         elif dry:
             dec = decide_mock(pid, p, stats, d)
         elif model is None:
-            dec = {"keep_current": True, "targets": [], "reason": "이번 달 예산을 다 써서 쉬는 중",
-                   "diary": "(예산 소진, 보유 유지)"}
+            dec = {"keep_current": True, "targets": [], "reason": "쓸 수 있는 크레딧이 없어 쉬는 중",
+                   "diary": "(크레딧 소진, 보유 유지)"}
         else:
             try:
                 if do_research:
@@ -782,7 +806,7 @@ footer{{margin-top:36px;padding-top:12px;border-top:3px solid var(--ink);font-si
 <h2>선수별 오늘</h2><div class="cards">{"".join(cards)}</div>
 <h2>최근 거래</h2><table class="trades">{trows}</table>
 <footer>{st["start_date"]} 시작. 주문은 다음 거래일 시가에 체결, 매도 시 약 0.2% 비용 반영.<br>
-이번 달 API 사용액 약 ${month_cost(u, date.fromisoformat(st["last_date"])) if st["last_date"] else 0:.2f} / ${month_setting(date.fromisoformat(st["last_date"]), "budget", MONTHLY_BUDGET) if st["last_date"] else MONTHLY_BUDGET:.0f}.
+지금 크레딧 구간 사용액 약 ${month_cost(u, date.fromisoformat(st["last_date"])) if st["last_date"] else 0:.2f} / ${month_setting(date.fromisoformat(st["last_date"]), "budget", MONTHLY_BUDGET) if st["last_date"] else MONTHLY_BUDGET:.0f}.
 누적 ${u["cost_usd"]:.2f}, 입력 {u["input_tokens"]:,} 토큰, 출력 {u["output_tokens"]:,} 토큰, 웹 검색 {u["web_searches"]}회.</footer>
 </div></body></html>"""
     PAGE_PATH.parent.mkdir(parents=True, exist_ok=True)
