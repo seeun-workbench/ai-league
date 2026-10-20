@@ -83,7 +83,7 @@ BUY_FEE = 0.00015            # 한국 매수 수수료 0.015%
 SELL_FEE = 0.00015 + 0.002   # 한국 매도 수수료 0.015% + 거래세 약 0.2% (단순화)
 US_FEE = 0.001               # 미국 매수, 매도 각각 약 0.1% (수수료와 환전 비용, 세금 없음으로 단순화)
 MAX_WEIGHT = 40.0            # 한 종목 최대 비중(%)
-JOURNAL_KEEP = 60            # 선수별 일지 보관 개수
+JOURNAL_KEEP = None          # 선수별 일지 보관 개수 (None이면 전부 보관)
 
 UNIVERSE_KR = {
     "005930.KS": "삼성전자",
@@ -736,7 +736,8 @@ def run_day(st, data, d, client=None, dry=False):
         p["journal"].append({"date": d.isoformat(), "diary": dec.get("diary", "").replace("·", ", "),
                              "reason": dec.get("reason", "").replace("·", ", "), "targets": targets,
                              "model": model, "research": note.replace("·", ", ") if note else note})
-        p["journal"] = p["journal"][-JOURNAL_KEEP:]
+        if JOURNAL_KEEP:
+            p["journal"] = p["journal"][-JOURNAL_KEEP:]
     usage.setdefault(days_key, [])
     if d.isoformat() not in usage[days_key]:
         usage[days_key].append(d.isoformat())
@@ -940,7 +941,24 @@ footer{{margin-top:36px;padding-top:12px;border-top:3px solid var(--ink);font-si
 누적 ${u["cost_usd"]:.2f}, 입력 {u["input_tokens"]:,} 토큰, 출력 {u["output_tokens"]:,} 토큰, 웹 검색 {u["web_searches"]}회.</footer>
 </div></body></html>"""
     PAGE_PATH.parent.mkdir(parents=True, exist_ok=True)
-    PAGE_PATH.write_text(html)
+    days_dir = PAGE_PATH.parent / "days"
+    days_dir.mkdir(exist_ok=True)
+    past = sorted({f.stem for f in days_dir.glob("????-??-??.html")} | ({d} if d != "-" else set()), reverse=True)
+
+    def with_archive(page, snapshot_of=None):
+        pre = "" if snapshot_of else "days/"
+        links = "".join(f'<a href="{pre}{x}.html"{" class=on" if x == snapshot_of else ""}>{x[5:].replace("-", ".")}</a>'
+                        for x in past)
+        note = (f'<p class="muted" style="margin-bottom:8px">{snapshot_of} 마감 때 저장한 페이지예요. '
+                f'<a href="../index.html">오늘 페이지로</a></p>') if snapshot_of else ""
+        nav = f'<h2>지난 기록</h2>{note}<nav class="days">{links}</nav>'
+        css = ('.days{display:flex;flex-wrap:wrap;gap:6px}.days a{font-size:13px;padding:4px 10px;border:1px solid var(--line);'
+               'border-radius:999px;color:var(--sub);text-decoration:none}.days a.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}')
+        return page.replace("</style>", css + "</style>", 1).replace("<footer>", nav + "<footer>", 1)
+
+    PAGE_PATH.write_text(with_archive(html))
+    if d != "-":
+        (days_dir / f"{d}.html").write_text(with_archive(html, d))  # 같은 날 다시 그리면 최신으로 갱신
 
 
 # ---------------------------------------------------------------------------

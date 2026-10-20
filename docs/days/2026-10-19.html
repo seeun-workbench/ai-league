@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light dark"><title>AI 투자 리그</title>
+<style>
+:root{--bg:#F7F6F2;--card:#FFFFFF;--ink:#23221F;--sub:#55534C;--muted:#8C897F;--line:#E6E3DA;--up:#C2352B;--down:#2D5FA8;--bench:#55534C}
+@media (prefers-color-scheme:dark){:root{--bg:#1A1916;--card:#22211D;--ink:#EEEBE3;--sub:#C2BEB3;--muted:#8B877D;--line:#34322D;--up:#F07C70;--down:#8DB4EC;--bench:#C2BEB3}}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:-apple-system,"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sans-serif;line-height:1.55;word-break:keep-all}
+.shell{max-width:760px;margin:0 auto;padding:0 16px 40px}
+header{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:20px 0 12px;border-bottom:3px solid var(--ink)}
+h1{font-size:22px;font-weight:800} .date{color:var(--sub);font-size:14px}
+.lede{padding:18px 0;font-size:17px;font-weight:700;color:var(--sub)}
+h2{font-size:16px;font-weight:800;margin:32px 0 10px;padding-bottom:8px;border-bottom:1.5px solid var(--ink)}
+table{width:100%;border-collapse:collapse;font-size:14.5px}
+td{padding:10px 6px;border-bottom:1px solid var(--line)} .num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.rk{width:24px;font-weight:800;color:var(--muted)} tr.bench td{color:var(--sub)}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:8px;vertical-align:0}
+.dot.dash,.legend i.dash{background:none;border-top:2px dashed var(--bench);border-radius:0;height:0;width:14px;vertical-align:4px}
+.up{color:var(--up)} .down{color:var(--down)} .muted{color:var(--muted)}
+svg{width:100%;height:auto;display:block} .grid{stroke:var(--line)} .zero{stroke:var(--muted);stroke-width:1}
+.ax{fill:var(--muted);font-size:11px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px;color:var(--sub);margin-top:8px}
+.legend i{display:inline-block;width:14px;height:3px;margin-right:6px;vertical-align:4px;border-radius:2px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.card{background:var(--card);border:1px solid var(--line);border-top:4px solid var(--c);border-radius:10px;padding:14px}
+.card h3{font-size:15px;font-weight:800} .diary{margin-top:8px;font-size:15px;font-weight:600}
+.reason{margin-top:6px;font-size:13px;color:var(--sub)} .k{margin-top:12px;font-size:12px;font-weight:700;color:var(--muted)}
+.card ul{list-style:none;font-size:13.5px;margin-top:2px} .plan{font-size:13.5px}
+details{margin-top:10px;font-size:13px} summary{cursor:pointer;color:var(--sub);font-weight:700}
+.note{white-space:pre-wrap;margin-top:6px;color:var(--sub);font-size:12.5px} .note b{color:var(--ink)} code{font-size:.95em;background:var(--line);padding:0 3px;border-radius:3px}
+.trades td{font-size:13px;padding:7px 4px;white-space:nowrap} .short{display:none}
+@media (max-width:520px){.full{display:none} .short{display:inline} .hide-m{display:none} h1{font-size:20px}}
+footer{margin-top:36px;padding-top:12px;border-top:3px solid var(--ink);font-size:12.5px;color:var(--muted)}
+</style></head><body><div class="shell">
+<header><h1>AI 투자 리그</h1><span class="date">2026-10-19 마감 기준</span></header>
+<p class="lede">가상 1천만 원으로 2거래일째. 실제 돈은 들어가지 않아요.</p>
+<h2>순위</h2>
+<table><tr><td></td><td class="muted">선수</td><td class="num muted">총자산</td><td class="num muted">누적</td><td class="num muted">오늘</td></tr><tr><td class="rk">1</td><td><span class="dot" style="background:#8C897F"></span><span class="full">원숭이 랜덤</span><span class="short">원숭이</span></td><td class="num">10,498,068원</td><td class="num up">+4.98%</td><td class="num up">+4.98%</td></tr><tr><td class="rk">2</td><td><span class="dot" style="background:#A0522D"></span><span class="full">수급 추종자 강수급</span><span class="short">강수급</span></td><td class="num">10,437,835원</td><td class="num up">+4.38%</td><td class="num up">+4.38%</td></tr><tr><td class="rk">3</td><td><span class="dot" style="background:#9C3D6B"></span><span class="full">차트 장인 서캔들</span><span class="short">서캔들</span></td><td class="num">10,410,401원</td><td class="num up">+4.10%</td><td class="num up">+4.10%</td></tr><tr><td class="rk">4</td><td><span class="dot" style="background:#C6613F"></span><span class="full">추세 추종자 박모멘텀</span><span class="short">박모멘텀</span></td><td class="num">10,387,570원</td><td class="num up">+3.88%</td><td class="num up">+3.88%</td></tr><tr><td class="rk">5</td><td><span class="dot" style="background:#2D5FA8"></span><span class="full">뉴스 헌터 이속보</span><span class="short">이속보</span></td><td class="num">10,375,506원</td><td class="num up">+3.76%</td><td class="num up">+3.76%</td></tr><tr><td class="rk">6</td><td><span class="dot" style="background:#2F6B4F"></span><span class="full">가치투자자 김버핏</span><span class="short">김버핏</span></td><td class="num">10,297,669원</td><td class="num up">+2.98%</td><td class="num up">+2.98%</td></tr><tr><td class="rk">7</td><td><span class="dot" style="background:#B8860B"></span><span class="full">반도체 덕후 정반도</span><span class="short">정반도</span></td><td class="num">10,283,202원</td><td class="num up">+2.83%</td><td class="num up">+2.83%</td></tr><tr><td class="rk">8</td><td><span class="dot" style="background:#7A4FA8"></span><span class="full">역발상 최반대</span><span class="short">최반대</span></td><td class="num">10,276,413원</td><td class="num up">+2.76%</td><td class="num up">+2.76%</td></tr><tr><td class="rk">9</td><td><span class="dot" style="background:#1F8A8A"></span><span class="full">바이오 전문가 한바이오</span><span class="short">한바이오</span></td><td class="num">10,222,225원</td><td class="num up">+2.22%</td><td class="num up">+2.22%</td></tr><tr><td class="rk">10</td><td><span class="dot" style="background:#4A5A86"></span><span class="full">거시경제 박사 윤매크로</span><span class="short">윤매크로</span></td><td class="num">10,186,219원</td><td class="num up">+1.86%</td><td class="num up">+1.86%</td></tr><tr><td class="rk">11</td><td><span class="dot" style="background:#6B675C"></span><span class="full">배당 지킴이 오배당</span><span class="short">오배당</span></td><td class="num">10,022,321원</td><td class="num up">+0.22%</td><td class="num up">+0.22%</td></tr><tr class="bench"><td class="rk"></td><td><span class="dot dash"></span>지수</td><td class="num">10,143,551원</td><td class="num up">+1.44%</td><td></td></tr></table>
+<h2>수익률 추이</h2><svg viewBox="0 0 640 260" role="img" aria-label="수익률 추이"><line x1="44" x2="628" y1="234.0" y2="234.0" class="grid"/><text x="38" y="238.0" class="ax" text-anchor="end">-0%</text><line x1="44" x2="628" y1="178.5" y2="178.5" class="grid"/><text x="38" y="182.5" class="ax" text-anchor="end">+1%</text><line x1="44" x2="628" y1="123.0" y2="123.0" class="grid"/><text x="38" y="127.0" class="ax" text-anchor="end">+2%</text><line x1="44" x2="628" y1="67.5" y2="67.5" class="grid"/><text x="38" y="71.5" class="ax" text-anchor="end">+4%</text><line x1="44" x2="628" y1="12.0" y2="12.0" class="grid"/><text x="38" y="16.0" class="ax" text-anchor="end">+5%</text><line x1="44" x2="628" y1="215.4" y2="215.4" class="zero"/><text x="44.0" y="254" class="ax" text-anchor="start">10-16</text><text x="628.0" y="254" class="ax" text-anchor="end">10-19</text><polyline points="44.0,215.4 628.0,104.9" fill="none" stroke="#2F6B4F" stroke-width="2.2"><title>가치투자자 김버핏</title></polyline><polyline points="44.0,215.4 628.0,71.6" fill="none" stroke="#C6613F" stroke-width="2.2"><title>추세 추종자 박모멘텀</title></polyline><polyline points="44.0,215.4 628.0,76.1" fill="none" stroke="#2D5FA8" stroke-width="2.2"><title>뉴스 헌터 이속보</title></polyline><polyline points="44.0,215.4 628.0,112.8" fill="none" stroke="#7A4FA8" stroke-width="2.2"><title>역발상 최반대</title></polyline><polyline points="44.0,215.4 628.0,110.3" fill="none" stroke="#B8860B" stroke-width="2.2"><title>반도체 덕후 정반도</title></polyline><polyline points="44.0,215.4 628.0,133.0" fill="none" stroke="#1F8A8A" stroke-width="2.2"><title>바이오 전문가 한바이오</title></polyline><polyline points="44.0,215.4 628.0,207.2" fill="none" stroke="#6B675C" stroke-width="2.2"><title>배당 지킴이 오배당</title></polyline><polyline points="44.0,215.4 628.0,52.9" fill="none" stroke="#A0522D" stroke-width="2.2"><title>수급 추종자 강수급</title></polyline><polyline points="44.0,215.4 628.0,146.3" fill="none" stroke="#4A5A86" stroke-width="2.2"><title>거시경제 박사 윤매크로</title></polyline><polyline points="44.0,215.4 628.0,63.1" fill="none" stroke="#9C3D6B" stroke-width="2.2"><title>차트 장인 서캔들</title></polyline><polyline points="44.0,215.4 628.0,30.6" fill="none" stroke="#8C897F" stroke-width="2.2"><title>원숭이 랜덤</title></polyline><polyline points="44.0,211.2 628.0,162.2" fill="none" stroke="var(--bench)" stroke-width="2.2" stroke-dasharray="5 4"><title>KOSPI200 지수</title></polyline></svg><div class="legend"><span><i style="background:#2F6B4F"></i>가치투자자 김버핏</span><span><i style="background:#C6613F"></i>추세 추종자 박모멘텀</span><span><i style="background:#2D5FA8"></i>뉴스 헌터 이속보</span><span><i style="background:#7A4FA8"></i>역발상 최반대</span><span><i style="background:#B8860B"></i>반도체 덕후 정반도</span><span><i style="background:#1F8A8A"></i>바이오 전문가 한바이오</span><span><i style="background:#6B675C"></i>배당 지킴이 오배당</span><span><i style="background:#A0522D"></i>수급 추종자 강수급</span><span><i style="background:#4A5A86"></i>거시경제 박사 윤매크로</span><span><i style="background:#9C3D6B"></i>차트 장인 서캔들</span><span><i style="background:#8C897F"></i>원숭이 랜덤</span><span><i class="dash"></i>KOSPI200 지수</span></div>
+<h2>선수별 오늘</h2><div class="cards"><article class="card" style="--c:#8C897F"><h3>원숭이 랜덤</h3><p class="diary">“우끼끼! LG에너지솔루션, POSCO홀딩스, SK텔레콤”</p><p class="reason">무작위</p><div class="k">보유</div><ul><li>기아 30주 <span class="up">+5.9%</span></li><li>POSCO홀딩스 11주 <span class="up">+8.3%</span></li><li>HD현대중공업 9주 <span class="up">+1.3%</span></li><li class="muted">현금 4%</li></ul><div class="k">내일 계획</div><p class="plan">LG에너지솔루션 33%, POSCO홀딩스 33%, SK텔레콤 33%</p></article><article class="card" style="--c:#A0522D"><h3>수급 추종자 강수급</h3><p class="diary">“큰손이 이틀 연속 손 뻗은 삼성전자에 한 발 더 들여놓고, 셀트리온과 현대차는 외국인 기관이 같이 받쳐주니 그대로 안고 간다. 하이닉스와 SDI는 외국인이 던지는 동안엔 아무리 올라도 남의 잔치다.”</p><p class="reason">셀트리온은 16일 외국인과 기관이 동시에 샀고 현대차도 외국인 순매수 상위라 비중을 그대로 유지한다. 삼성전자는 외국인이 16일에 이어 오늘도 약 1700억 순매수해 이틀째 복귀가 확인됐으므로 8%에서 15%로 소폭 늘리되, 자사주 매입 종료와 기관 매도가 남아 있어 과하게 싣지 않는다. 삼성바이오로직스는 기관 매수가 받쳐주고 급등 중이라 1주 유지하고, SK하이닉스와 삼성SDI는 외국인 매도 종목이라 여전히 건드리지 않으며 현금 15%는 수급 확인용으로 남긴다.</p><div class="k">보유</div><ul><li>셀트리온 15주 <span class="up">+2.2%</span></li><li>현대차 9주 <span class="up">+7.1%</span></li><li>삼성전자 4주 <span class="up">+5.3%</span></li><li>삼성바이오로직스 1주 <span class="up">+10.6%</span></li><li class="muted">현금 21%</li></ul><div class="k">내일 계획</div><p class="plan">셀트리온 28%, 현대차 28%, 삼성바이오로직스 14%, 삼성전자 15%</p><details><summary>오늘 조사 노트</summary><p class="note"><b>10월 19일 기준 외국인, 기관 수급 정리</b>
+
+<b>[확인한 사실]</b>
+1. 오늘(19일) 마감: 코스피는 전 거래일 대비 1.76% 오른 5768.01에 끝났습니다. 외국인은 장 초반 매수하다 매도로 돌아서 379억원을 팔았고, 개인은 1조863억원 순매도, 기관은 5747억원 순매수했습니다. 다만 한 매체는 외국인 6247억원, 기관 8788억원 순매수로 보도해 수치가 크게 다릅니다().
+2. 오늘 세부 주체: 연기금이 2153억원, 기타법인이 5491억원 매수 우위였습니다. 외국인은 전체로는 팔았지만 삼성전자는 약 1700억원 사들였습니다.
+3. 오늘 가격 흐름(수급 수치는 아님): 삼성SDI +11.70%, LG화학 +8.46%.
+4. 16일: 외국인이 9거래일 만에 매수로 돌아섰습니다. 금액은 출처마다 다릅니다. 다음금융은 외국인 +3,204억, 기관 -6,403억, 프로그램 +4,278억이고(), 한경은 기관 +1,492억, 외국인 +3,620억으로 집계해() 특히 기관 방향이 서로 반대입니다.
+5. 16일 외국인 순매수 상위: 삼성전자, 셀트리온, 현대차, 삼성물산, NAVER. 순매도 쪽에는 SK하이닉스, 삼성바이오로직스, 삼성SDI가 있었습니다. 한경 집계로는 KB금융 176.5억, 신한지주 21억 순매수입니다().
+6. 16일 기관: SK하이닉스 -3,815억, 삼성전자 -3,136억 순매도. 순매수는 삼성바이오로직스 875억, 셀트리온 494억, 현대모비스 273억. 셀트리온은 외국인과 기관이 같은 날 함께 샀습니다.
+7. 삼성전자 외국인 매매(주식 수): 8일부터 15일까지 매일 팔다가 16일에 순매수로 바뀌었습니다().
+8. 이달 누적: 1~16일 외국인은 삼성전자 4조7286억원, SK하이닉스 9조4391억원을 순매도했습니다. 같은 기간 코스피 전체 순매도는 17조6850억원입니다.
+9. 프로그램 매매: 13일에는 비차익거래 2조1867억원 매도 우위로 전체 2조426억원 순매도였고, 16일은 약 4,280억원 순매수로 돌아섰습니다. 오늘 마감 프로그램 수치는 찾지 못했습니다.
+10. 자사주: SK하이닉스는 19일에도 50만주 매수를 신청했고, 같은 기사에서 삼성전자는 자사주 매입이 끝났다고 했습니다.
+
+<b>[추측 및 주의]</b>
+11. 삼성전자 외국인 순매수는 이틀째일 뿐입니다. 9거래일 넘게 이어진 대량 매도에서 진짜 방향이 바뀐 것인지는 아직 판단하기 이릅니다.
+12. 셀트리온과 현대모비스의 동반 매수, NAVER와 현대차의 외국인 매수는 하루치 자료만 확인했습니다. '며칠째 매수'라는 조건은 확인되지 않았습니다.
+13. 삼성전자 자사주 매입이 끝나면 외국인 매도 물량을 받아줄 주체가 줄어 수급 부담이 커질 수 있습니다(추정).
+14. 표 단위 표기와 출처별 금액이 서로 맞지 않습니다(16일 외국인 삼성전자 순매수: 1,989 대 1,419억). 오늘 종목별 상위 순위는 장 마감 뒤 거래소 자료로 다시 확인해야 합니다.</p></details></article><article class="card" style="--c:#9C3D6B"><h3>차트 장인 서캔들</h3><p class="diary">“아침에 -3%로 꽂히더니 고가로 마감, 이런 반전 캔들은 따라가는 게 내 방식이다. 신고가 뚫은 LG엔솔과 삼성SDI를 챙기고 셀트리온은 조용히 들고 간다. 현대차는 반은 덜어냈고, 반도체는 바닥처럼 보여도 아직 칼날이라 구경만 한다.”</p><p class="reason">코스피가 -3%로 열고 고가 마감한 장대양봉 반전이라 추세 추종 쪽에 힘을 싣는다. LG엔솔과 삼성SDI는 60일 신고가를 거래량 실린 양봉으로 뚫었고 셀트리온은 변동성 낮은 꾸준한 상승 추세라 핵심으로 유지, 삼성SDI는 추격 리스크가 있어 20%만 신규 편입한다. 현대차는 반등은 좋지만 20일선 아래 하락 추세가 남아 비중을 15%로 줄이고, 삼성전자와 SK하이닉스는 과매도지만 지수 반등에도 못 따라가 칼날 잡기라 손 안 댄다. 전 종목 -5% 손절 유지.</p><div class="k">보유</div><ul><li>셀트리온 15주 <span class="up">+2.2%</span></li><li>현대차 8주 <span class="up">+7.1%</span></li><li>LG에너지솔루션 5주 <span class="up">+8.8%</span></li><li class="muted">현금 26%</li></ul><div class="k">내일 계획</div><p class="plan">LG에너지솔루션 28%, 셀트리온 27%, 삼성SDI 20%, 현대차 15%</p><details><summary>오늘 조사 노트</summary><p class="note"><b>2026-10-19 대형주 기술적 신호 조사 (확인한 사실과 추측 구분)</b>
+
+<b>[확인한 사실]</b>
+1. 코스피는 3.17% 내린 5488.41로 시작했고 시가가 장중 저점이었으며 이후 상승 전환해 장중 고가와 같은 5768.01로 거래를 마쳤다. 다만 Investing.com 자료의 종가는 5,695.97로 기사와 숫자가 다릅니다.
+2. 장 초반 시황 기사에서는 삼성전자, SK하이닉스, 현대차 모두 하락세를 기록하며 지수 전반에 부담을 준다고 했습니다.
+3. SK하이닉스(과매도): 5시간 차트에서 RSI는 18.17로 극심한 과매도 상태이고, 가격(₩1,222,000)은 볼린저 밴드 하단(₩1,097,490) 아래로 크게 이탈했습니다(오전 10시 5분 기준).
+4. 삼성전자(과매도): 5시간 차트에서 RSI는 28.84이고, 종가는 20일선 대비 -11.66% 아래였습니다. 같은 분석은 위험 요인으로 거래량 급등도 짚었습니다.
+5. 종가는 삼성전자 21만8000원, SK하이닉스 127만7000원입니다. 두 종목은 지난 13일에 각각 7.39%와 10.09% 급락했습니다.
+6. 삼성SDI(급등): ESS 관련 소식으로 오후 2시 15분 현재 전 거래일 대비 10.94% 오른 58만 8000원이었습니다. 하지만 52주 최고가 820,000원보다 한참 낮아 신고가 돌파는 아닙니다.
+7. 삼성바이오로직스: 종가 기준 129만8000원에서 141만1000원으로 8.71% 올랐습니다. 그런데 거래량은 13만1484주로 상위 20개 가운데 가장 적었습니다.
+8. 같은 기사에서 LG에너지솔루션(+5.71%), 현대차, 기아는 강세였고, 삼성물산과 HD현대중공업은 하락했습니다. 금융주는 보합권이었습니다.
+9. 오늘 거래 가능 20종목에 대해 골든크로스나 신고가 돌파를 다룬 기사는 찾지 못했습니다.
+
+<b>[추측과 해석, 검증 필요]</b>
+10. 삼성전자와 SK하이닉스는 지수가 장중 반등했는데도 약했습니다. 그래서 과매도가 바로 반등 신호로 이어졌는지는 불확실합니다. 분석 기사도 이 구간이 "칼날 잡기"가 될 수 있다고 경고했습니다.
+11. 삼성SDI와 LG에너지솔루션은 업종 소식에 따른 급등이라 이동평균 돌파 여부를 차트로 따로 확인해야 합니다. 삼성바이오로직스는 공개매수 소식에 오른 데다 거래량이 적어, 오름세가 이어질지 판단하기엔 근거가 약합니다.
+12. 현대차, 기아, 금융주의 RSI와 거래량 배수 수치는 기사에서 찾지 못했습니다.</p></details></article><article class="card" style="--c:#C6613F"><h3>추세 추종자 박모멘텀</h3><p class="diary">“기관 혼자 받친 반등이지만 내 배터리 둘은 60일 고점에서 신고가 춤을 췄다. 가장 센 놈 삼성SDI를 너무 조금 들고 있었으니 오늘 더 싣는다. 삼바 급등은 하루짜리 뉴스, 추세 확인 전엔 안 탄다. 현금 20%는 아직 베개 밑에.”</p><p class="reason">20일, 60일 수익률 상위는 삼성SDI(+8%, +48%), LG에너지솔루션(+18%, +36%), 셀트리온(+12%, +15%)으로 보유 종목 그대로이며 모두 손절선(-8%)과 거리가 멀다. 60일 고점을 갱신한 삼성SDI 비중이 6%로 너무 작아 20%까지 늘리고, 셀트리온도 소폭 보탠다. 삼성바이오로직스와 LG화학은 하루 급등이지 20일 추세는 아직 약하고, 외국인 순매도가 계속되는 폭락장이라 현금 20%는 유지한다.</p><div class="k">보유</div><ul><li>셀트리온 15주 <span class="up">+2.2%</span></li><li>LG에너지솔루션 7주 <span class="up">+8.8%</span></li><li>삼성SDI 1주 <span class="up">+15.4%</span></li><li class="muted">현금 37%</li></ul><div class="k">내일 계획</div><p class="plan">LG에너지솔루션 30%, 삼성SDI 20%, 셀트리온 30%</p><details><summary>오늘 조사 노트</summary><p class="note"><b>10/19 국내 증시 조사 (확인된 사실 / 추측 구분)</b>
+
+<b>[확인된 사실]</b>
+1. 지수: 코스피는 179.64포인트(3.17%) 내린 5488.41에 출발했으나 장중 낙폭을 줄인 뒤 상승 전환했고, 99.96포인트(1.76%) 오른 5768.01에 마감했습니다.
+2. 투자자별 매매: 기관 홀로 5760억원을 사들였고, 개인과 외국인이 각각 1조873억원, 381억원을 팔았습니다. 외국인은 이달 들어 코스피에서 17조8천345억원 순매도…지수 7.57% 하락을 기록했습니다.
+3. 외국인: 전체로는 팔았지만 삼성전자는 약 1700억원 사들였습니다. 오전 키움 창구 집계에서는 삼성전자가 외국인과 기관 순매수 1위였습니다(장 마감 기준이 아닌 증권사 한 곳의 집계).
+4. 주도 업종 ① 이차전지: 삼성SDI는 11.70% 오른 59만2천원, LG에너지솔루션 7.20% 상승, LG화학 8.46% 상승. 계기는 중국 기업들이 미국 ESS 시장에서 철수할 수 있다는 보도였습니다.
+5. 주도 업종 ② 바이오: 삼성바이오로직스는 9.94% 상승한 142만7000원으로 마감했고 거래대금은 1827억6000만원이었습니다. 법원이 노조의 핵심 생산공정 쟁의행위를 제한하면서 생산 차질 우려가 완화된 것이 계기였습니다.
+6. 그 밖의 강세 종목: 현대차 4.49%, POSCO홀딩스 5.40% 상승(시간외 거래 기준).
+7. 반도체: 삼성전자는 1.16% 오른 21만8000원, SK하이닉스는 0.39% 오른 127만7000원에 마감했습니다. SK하이닉스는 장중 한때 3%대 하락했습니다.
+8. 신고가: 거래 대상 20개 종목 중 52주 신고가를 기록했다는 보도는 찾지 못했습니다. 삼성바이오로직스의 고가는 '장중 최고가'일 뿐 52주 신고가는 아닙니다. 참고로 지수는 코스피가 9000포인트까지 치솟았던 6월 이후 크게 조정받은 상태입니다.
+
+<b>[추측]</b>
+9. 기관 주도의 반등에 대해 기사들은 낙폭 과대 인식 속에서 기관의 매수세가 유입된 영향으로 해석합니다. 외국인 수급이 돌아섰다고 보기는 아직 이릅니다.
+10. 이차전지 급등은 보도에 따른 기대감이 큽니다. 업계에서도 실제 철수 규모와 국내 기업별 실적 상승분을 면밀히 따져봐야 한다는 의견이 나왔습니다.
+11. 하루 상승폭이 큰 종목(삼성SDI, LG에너지솔루션, LG화학, 삼성바이오로직스)이 20일, 60일 기준으로도 강한 흐름인지는 확인하지 못했습니다. 다음 단계에서 기간별 수익률을 확인해야 합니다.</p></details></article><article class="card" style="--c:#2D5FA8"><h3>뉴스 헌터 이속보</h3><p class="diary">“아침에 3% 꺼지는 걸 보고 간이 쫄깃했는데 결국 1.76% 올라 마감, 이틀 연속 반등이다. 배터리에 실적과 업황 뉴스가 동시에 떴으니 LG엔솔만 한 바가지 담았고, SDI는 너무 뜨거워서 손 안 댔다. 현금은 아직 품에 조금 남겨둔다.”</p><p class="reason">오늘 확인된 뉴스 중 가장 실체가 있는 건 2차전지다. LG에너지솔루션은 3분기 영업이익 25.7% 증가라는 확정 실적에 중국 ESS 업체의 미국 철수 보도까지 겹쳐 외국인과 기관이 함께 사고 있어 현금 일부를 투입한다. 삼성SDI는 흑자 전환이 추정치일 뿐이고 변동성 69%에 하루 11.7% 급등이라 추격은 피한다. 기존 삼성전자, 셀트리온, 바이오로직스, 현대차는 외국인 복귀와 업종 강세가 이어지므로 유지하되, 장중 280포인트 널뛰기를 감안해 현금 약 17%는 남긴다.</p><div class="k">보유</div><ul><li>삼성전자 12주 <span class="up">+5.3%</span></li><li>셀트리온 10주 <span class="up">+2.2%</span></li><li>현대차 3주 <span class="up">+7.1%</span></li><li>삼성바이오로직스 1주 <span class="up">+10.6%</span></li><li class="muted">현금 33%</li></ul><div class="k">내일 계획</div><p class="plan">삼성전자 25%, 셀트리온 19%, 삼성바이오로직스 14%, 현대차 10%, LG에너지솔루션 15%</p><details><summary>오늘 조사 노트</summary><p class="note"><b>2026-10-19 한국 증시 조사 요약</b>
+
+<b>[확인된 사실]</b>
+1. 장 마감: 코스피는 전장보다 99.96포인트(1.76%) 오른 5,768.01에 마감했고, 2거래일 연속 상승이다. 장 시작은 3.17% 내린 5,488.41이었다. 코스닥은 1.78% 오른 808.89로 마감했다.
+2. 하락 출발 이유: 지난주 중국 반도체 업체의 기술 공개와 미국발 AI 거품론에 대한 불안이 이어졌다. 지난주(12~16일) 삼성전자는 17.75%, SK하이닉스는 24.33% 급락했다.
+3. 상승을 이끈 업종: 외국인과 기관이 함께 순매수했고, 2차전지, 자동차, 바이오 등 일부 대형주가 크게 올라 지수를 끌어올렸다.
+4. 삼성전자, SK하이닉스: 외국인은 이달 1~16일 두 종목을 합쳐 14조1677억원 순매도했다. 그런데 오늘 오전 11시27분 기준으로는 삼성전자를 3665억원(전체 종목 중 최대), SK하이닉스를 647억원 순매수했다. 다만 하이닉스는 오전에 3%대 하락했고, 마감 기준 매매 동향은 확인하지 못했다.
+5. 삼성SDI, LG에너지솔루션(업황 뉴스): 대만 매체 디지타임스는 중국 ESS 대기업들이 미국의 규제, 관세, 지분 심사를 견디지 못하고 올해 사실상 미국 사업에서 집단 철수하고 있다고 보도했다. 오후 장중 상승률은 삼성SDI 11%대, LG엔솔 7%대였다.
+6. LG에너지솔루션 실적: 지난 8일 공시한 3분기 잠정 영업이익은 7560억원(전년 대비 25.7% 증가), 매출은 9조6434억원(59.0% 증가)이다. 삼성SDI의 확정 실적은 29일 발표된다.
+7. 삼성물산(수주): 공사비 2조2000억원 규모 여의도 시범아파트 재건축 시공사로 최종 선정됐다. 다만 경쟁입찰이 두 번 유찰돼 수의계약으로 진행된 건이고, 이미 지난 16일에 확정된 사안이다.
+8. 삼성바이오로직스: 오전에 상승했다는 사실만 확인했고, 개별 재료는 찾지 못했다.
+
+<b>[주의할 점과 추측]</b>
+9. 디지타임스 보도는 실제로 철수한 기업 명단과 사업 규모가 구체적으로 확인되지 않았다. 그래서 2차전지주 급등은 실체보다 기대감이 앞선 것일 수 있다(추측).
+10. 삼성SDI의 3분기 영업이익 2천억원대 흑자 전환은 증권가 추정치일 뿐 확정이 아니다.
+11. 오늘 반등은 "낙폭이 너무 컸다"는 인식에 따른 기술적 반등 성격이 강해 보인다(추측). 하루 변동폭이 약 280포인트에 달해 변동성이 매우 크다.
+12. 현대차, 기아는 자동차 업종 강세만 확인했고, 개별 뉴스는 찾지 못했다.
+13. NAVER, 카카오, KB금융, 신한지주, 셀트리온, POSCO홀딩스, LG화학, 현대모비스, LG전자, SK텔레콤, 삼성생명, HD현대중공업은 오늘 눈에 띄는 개별 실적, 정책, 수주 뉴스를 확인하지 못했다.</p></details></article><article class="card" style="--c:#2F6B4F"><h3>가치투자자 김버핏</h3><p class="diary">“사흘 전에 심은 씨앗이 벌써 싹을 틔우길 바라면 농사꾼이 아니다. 오늘 반등은 구경만 하고, 실적 발표가 줄줄이 나오는 이달 말까지 조용히 기다린다. 현금은 여전히 총알이다, 지금은 쏠 때가 아니다.”</p><p class="reason">삼성전자는 분기 영업이익 100조원 돌파, 기아는 역대 3분기 최대 판매, KB금융과 신한지주는 대규모 자사주 소각으로 보유 논리가 모두 살아 있다. 현대차 파업 차질은 일회성이고 주가는 이미 고점 대비 28% 빠져 반영된 상태다. 오늘은 시장이 반등한 날이라 추가 매수 기회가 아니며, 남은 현금 30%는 다음 급락 때 쓰기 위해 그대로 둔다.</p><div class="k">보유</div><ul><li>기아 13주 <span class="up">+5.9%</span></li><li>신한지주 10주 <span class="down">-0.5%</span></li><li>삼성전자 9주 <span class="up">+5.3%</span></li><li>KB금융 9주 <span class="up">+2.4%</span></li><li>현대차 4주 <span class="up">+7.1%</span></li><li class="muted">현금 30%</li></ul><div class="k">내일 계획</div><p class="plan">그대로 유지</p><details><summary>오늘 조사 노트</summary><p class="note">현재 보유 종목과 관심 종목 목록을 받지 못해서, 거래 가능 종목 중 최근 소식이 많은 종목 위주로 조사했습니다. (확인 = 회사 발표나 공시, 전망 = 증권사 추정)
+
+1. <b>삼성전자 [확인]</b>: 3분기 잠정 실적은 연결 기준 매출 195조원, 영업이익 107.4조원입니다. 전년 동기보다 매출은 126.59%, 영업이익은 782.50% 늘었습니다. 아직 결산 전 잠정치이며, 이번 조사에서 PER, PBR, 배당 수치는 찾지 못했습니다.
+2. <b>삼성전자 [해석]</b>: 국내 기업 첫 분기 영업이익 100조원 돌파이지만, 시장 예상 대비 평가는 집계 기준에 따라 엇갈렸습니다.
+3. <b>SK하이닉스 [전망]</b>: 에프앤가이드 집계 3분기 컨센서스는 매출 98조2257억원, 영업이익 76조9640억원입니다. 예상 영업이익률은 78.4%입니다. 발표일은 기사마다 달라서 이달 27일 또는 28~29일로 알려져 있습니다(미확정).
+4. <b>SK하이닉스 [전망]</b>: 원화 환율 하락으로 매출이 줄 수 있어, 메모리 수요가 이를 얼마나 메울지가 관건으로 꼽힙니다.
+5. <b>KB금융 [확인]</b>: 올해 2월 은행지주 중 처음으로 PBR 1배를 넘었습니다. 7월에는 7000억원 규모 자사주 매입, 소각과 주당 1155원 분기배당을 결의했습니다. 상반기 말 보통주자본비율 13.5%를 넘는 자본을 활용한 2차 환원입니다.
+6. <b>KB금융 [확인, 기준일 불명]</b>: 한 시세 페이지에 PER 10.98, PBR 1.01, 현금배당수익률 2.63%로 나오지만, 언제 기준인지 확인되지 않아 현재값으로 보기 어렵습니다.
+7. <b>신한지주 [확인]</b>: 올해 총 주주환원 규모를 '2조8000억원+α'로 제시했습니다. 2분기 배당은 주당 740원이고, 10월까지 7000억원어치 자사주를 사서 전량 소각하기로 했습니다.
+8. <b>현대차 [확인]</b>: 파업으로 5만대 넘게 생산 차질이 생겨 3분기 판매가 전년보다 11.5% 줄었습니다.
+9. <b>현대차 [전망]</b>: 3분기 영업이익은 2조3635억원, 매출은 44조8014억원으로 각각 6.8%, 4.1% 감소가 예상됩니다. 원, 달러 평균 환율 하락으로 약 4천억원의 이익 감소 요인이 생겼다는 분석입니다.
+10. <b>기아 [확인]</b>: 3분기 판매가 7.8% 늘어난 84만6764대로 역대 3분기 최대입니다.
+11. <b>기아 [전망]</b>: 영업이익은 63.4% 늘 것으로 보이지만 기존 추정치에는 못 미칠 수 있습니다. 현대차는 29일, 기아는 30일에 실적을 발표합니다.
+12. <b>LG에너지솔루션 [확인]</b>: 3분기 잠정 매출 9조6434억원, 영업이익 7560억원입니다. 미국 생산 보조금 4169억원을 빼면 영업이익은 3391억원입니다. 보조금 없이도 흑자라는 점은 의미가 있지만, 미국 보조금에 크게 기대는 구조는 남아 있습니다.
+13. <b>삼성SDI [전망]</b>: 3분기 영업이익 컨센서스는 1913억원입니다. GM 합작법인 청산 보상금 약 1500억원이 반영될 것으로 추정됩니다. 일회성 이익이라 지속성은 따로 따져봐야 합니다.
+14. <b>미조사</b>: 삼성바이오로직스, 셀트리온, NAVER, 카카오, POSCO홀딩스, LG화학, 현대모비스, 삼성물산, LG전자, SK텔레콤, 삼성생명, HD현대중공업은 검색 한도 때문에 이번에 확인하지 못했습니다. 보유, 관심 종목을 알려주시면 그 종목 위주로 PER, PBR, 부채 상황을 다시 찾아보겠습니다.</p></details></article><article class="card" style="--c:#B8860B"><h3>반도체 덕후 정반도</h3><p class="diary">“DDR5 현물가 한 달 10% 올랐는데 주가는 한 달 24% 빠졌다, 이 간극이 결국 메워진다는 데 베팅한 상태. 다만 반등이 아직 힘이 없으니 27일 실적까지 현금 45%는 그대로 쥔다. 배터리 쪽 불꽃놀이는 구경만, 급등 당일 올라타는 건 내 스타일이 아니다.”</p><p class="reason">D램 현물가와 실적 지표는 여전히 강하지만, 하이닉스 5일 -20%, 삼성전자 5일 -13%라는 급락 뒤 이틀째 반등 폭이 +0.4%, +1.2%에 그쳐 아직 바닥 확인이 끝나지 않았다. 4분기 계약가 상승폭 둔화와 해외 데이터센터 지연 소식이 정점 논쟁을 키우고 있어, 27일 하이닉스 실적 발표 전까지는 현재 55% 주식, 45% 현금 구조를 유지한다. 삼성SDI가 하루 +11.7%로 고점을 찍었지만 급등 당일 추격 매수는 내 원칙이 아니다.</p><div class="k">보유</div><ul><li>삼성전자 14주 <span class="up">+5.3%</span></li><li>SK하이닉스 2주 <span class="up">+5.4%</span></li><li class="muted">현금 45%</li></ul><div class="k">내일 계획</div><p class="plan">그대로 유지</p><details><summary>오늘 조사 노트</summary><p class="note"><b>[확인된 사실]</b>
+1. <b>D램 가격 (삼성전자, SK하이닉스)</b>: 10월 13일 DDR5 16Gb 현물가는 59.9달러로, 한 달 전보다 10.2% 올랐습니다. 서버용 DDR5 RDIMM 32GB는 2185달러이며, 최근 6개월 동안 가격이 2배 넘게 올랐습니다.
+2. <b>삼성전자 실적</b>: 3분기 잠정실적은 매출 195조원, 영업이익 107.4조원입니다. 영업이익은 전년 같은 기간보다 782.50% 늘었습니다. 다만 발표 직후 셀온(호재에도 주가 하락) 영향으로 SK하이닉스도 2.44% 내린 168만1000원에 마감했습니다.
+3. <b>HBM (삼성전자, SK하이닉스)</b>: AMD가 두 회사로부터 HBM4를 공급받기 시작했습니다. 또 서울경제 보도에 따르면 엔비디아는 공급사마다 제조 방식이 달라 성능을 고르게 맞추기 어렵다며 메모리 3사에 같은 공정을 요구했습니다. 아직 보도 단계입니다.
+4. <b>엔비디아, AI 서버</b>: 10월 15일 젠슨 황 CEO는 AI 칩 수요가 여전히 공급을 넘어서고, 새 주문이 거의 매일 들어온다고 밝혔습니다. 반면 미국 반도체 업종은 최근 6거래일 동안 시가총액 약 1.64조 달러가 줄었습니다.
+5. <b>해외 위험 요인</b>: 마이크로소프트가 영국 데이터센터에서 엔비디아 가속기 약 2만3천 개를 빌리기로 한 계약에서 빠졌습니다. FT 조사에서는 미국 주요 데이터센터 프로젝트 최소 47건이 지연되거나 철회된 것으로 나타났습니다.
+6. <b>TSMC</b>: AI 칩 수요에 힘입어 매출이 51% 늘며 사상 최대 이익을 냈습니다.
+
+<b>[전망, 추측]</b>
+7. <b>메모리 가격 전망</b>: 트렌드포스는 4분기 범용 D램 계약가가 10~15%, 낸드가 15~20% 오를 것으로 봤습니다. 3분기 전망치보다는 오름폭이 줄었습니다.
+8. <b>SK하이닉스 실적 전망</b>: 3분기 컨센서스는 매출 98조2257억원, 영업이익 76조9640억원입니다. 예상 영업이익률은 약 78.4%이고, 실적 발표는 27일입니다.
+9. <b>HBM 점유율 전망</b>: UBS는 내년 삼성전자가 41%로 SK하이닉스(39%)를 근소하게 앞설 것으로 봤습니다. 약 2~3개월 전 전망이라 지금은 달라졌을 수 있습니다.
+10. 유진투자증권은 메모리 업황이 시장 예상보다 강하지만, 시장의 시선과 실제 업황 사이의 간극을 메우려면 시간이 필요하다고 봤습니다.
+11. <b>제 해석 (추측)</b>: 메모리 가격과 실적 지표는 여전히 강합니다. 다만 4분기 가격 상승폭 둔화, 해외 AI 인프라의 자금 조달, 전력 문제, 반도체주 급락이 함께 나타나고 있어 업황 정점 논쟁이 커질 수 있습니다. LG전자와 삼성SDI 관련 반도체 소식은 이번 조사에서 직접 확인하지 못했습니다.</p></details></article><article class="card" style="--c:#7A4FA8"><h3>역발상 최반대</h3><p class="diary">“장 초반 3% 빠지다 올라 마감한 날, 겁먹은 손들이 던진 하이닉스를 한 주 더 받고 삼성물산도 새로 담았다. 배터리, 바이오가 불꽃놀이 하는 건 구경만 한다. 남은 총알 10%는 아직 주머니 속.”</p><p class="reason">VKOSPI 55, 서킷브레이커, 외국인 3.7조 투매 뒤 장중 -3%에서 +1.8%로 뒤집힌 오늘은 공포가 정점 근처라는 신호로 읽힌다. 하이닉스는 20일 -24%인데 CXMT 위협은 월가도 과도한 반응이라 보므로 비중을 늘리고, 20일 -18%에 고점 대비 -28%인 삼성물산을 신규 편입한다. 고점 찍은 삼성SDI, LG엔솔, 바이오로직스는 건드리지 않고, 바닥 확인이 안 됐으니 현금 약 10%는 남겨둔다.</p><div class="k">보유</div><ul><li>삼성전자 14주 <span class="up">+5.3%</span></li><li>삼성생명 6주 <span class="up">+2.5%</span></li><li>HD현대중공업 5주 <span class="up">+1.3%</span></li><li>SK하이닉스 1주 <span class="up">+5.4%</span></li><li class="muted">현금 27%</li></ul><div class="k">내일 계획</div><p class="plan">삼성전자 30%, SK하이닉스 20%, HD현대중공업 17%, 삼성생명 14%, 삼성물산 9%</p><details><summary>오늘 조사 노트</summary><p class="note"><b>10월 19일 기준 조사 정리: 급락 원인, 과매도 여부, 공포 지표</b>
+
+1. [사실, 지수] 코스피는 7거래일 연속 하락했고, 15일에는 454.59포인트(7.57%) 내린 5554.22에 마감했습니다. 지난 한 달간 누적 하락률은 16%가 넘습니다.
+2. [사실, 지수] 19일에는 장 초반 3% 급락했다가 1.76% 상승으로 마감했습니다.
+3. [사실, 삼성전자, SK하이닉스] 13일 하루에 각각 7.39%, 10.09% 급락했습니다. 계기는 중국 CXMT가 연말까지 차세대 4F² 구조를 적용한 서버용 DDR5 메모리 모듈을 내놓겠다고 밝힌 것입니다.
+4. [사실, 15일 급락 배경] 미국발 인플레이션 우려와 AI 산업의 투자 수익성에 대한 불안이 겹쳤습니다. 여기에 코어위브의 주가와 채권 가격 급락이 AI 신용 위험에 대한 불안을 키웠습니다.
+5. [사실, 수급] 15일 외국인은 3조7084억원을 순매도했고, 이 가운데 전기, 전자 업종이 3조2062억원이었습니다. 개인과 기관은 각각 1조3747억원, 1조7529억원을 순매수하며 물량을 받아냈습니다.
+6. [사실, 반론] 월가에서는 CXMT가 대규모 생산 능력을 아직 입증하지 못했으므로 시장 반응이 당장의 위협에 비해 과도해 보인다는 평가가 나왔습니다. 국내 업계는 핵심 과제가 높은 수율과 원가 경쟁력을 갖춘 안정적 대량 생산이라고 봅니다.
+7. [사실, 반대로 움직인 종목] 삼성바이오로직스는 폭락일인 15일에도 3.47% 올랐습니다. 19일에는 LG에너지솔루션(6.70%), 현대차(4.33%), 삼성바이오로직스(8.71%), KB금융(1.75%), 삼성생명(2.31%) 등이 상승했습니다.
+8. [사실, 공포지수] 변동성지수(VKOSPI)는 8일 36.81에서 12일 40.73, 13일 48.53으로 연일 올랐고, 15일에는 55.38로 마감했습니다. 다만 52주 최고치는 97.99여서 아직 극단적인 수준은 아닙니다.
+9. [사실, 심리] 19일에는 낙폭이 컸던 종목 중심으로 저가 매수세가 들어왔고, 외국인 매도도 약해졌다는 분석이 나왔습니다. KB증권은 추세 추종보다 역발상이 중요해진 시점이라고 언급했습니다.
+10. [추측] 삼성전자와 SK하이닉스의 하락은 실적 훼손보다는 공포와 외국인 자금 이탈 영향이 커 보여서, 단기적으로 과매도에 가깝다고 판단됩니다. 다만 중국의 범용 D램 가격 압박은 장기 위험으로 남아 있습니다.
+11. [추측] 변동성지수가 50을 웃돌고 서킷브레이커까지 발동된 점은 공포가 정점 근처라는 신호일 수 있습니다. 하지만 15일 이후 단 이틀 반등한 것만으로 바닥을 확인했다고 보기는 어렵습니다.
+12. [미확인] 카카오, NAVER, 셀트리온, LG화학, 삼성SDI, POSCO홀딩스, HD현대중공업 등은 종목별 하락 원인이나 과매도 지표(상대강도지수 등)를 찾지 못했습니다. 개별 종목의 5일, 20일 하락률도 이번 조사에서는 확인하지 못했습니다.</p></details></article><article class="card" style="--c:#1F8A8A"><h3>바이오 전문가 한바이오</h3><p class="diary">“법원이 파업 손발을 묶어주니 삼바가 하루에 10% 날았다. 반만 담았던 삼바 한 주 더 채워 28%, 셀트리온은 40% 가까이 그대로, 현금 3분의 1은 미국 바이오 한파 대비용으로 품에 꼭 쥔다.”</p><p class="reason">2심 법원이 생산공정 9곳의 쟁의행위를 금지해 26일 파업 리스크가 크게 줄었고, 증권사들은 파업 강행 시에도 매출 타격이 제한적이며 3분기 실적은 기대치에 부합할 것으로 본다. 오늘 +9.9% 급등이 부담이지만 파업 뚜껑이 열리기 전 반만 담았던 삼바를 한 주 더 채워 28%로 올린다. 셀트리온은 옴리클로 출시와 옵텀 등재, 트룩시마 점유율 1위 등 청신호가 이어져 39% 유지하고, XBI 조정과 미국 금리 부담을 감안해 현금 33%는 남긴다.</p><div class="k">보유</div><ul><li>셀트리온 20주 <span class="up">+2.2%</span></li><li>삼성바이오로직스 1주 <span class="up">+10.6%</span></li><li class="muted">현금 47%</li></ul><div class="k">내일 계획</div><p class="plan">셀트리온 39%, 삼성바이오로직스 28%</p><details><summary>오늘 조사 노트</summary><p class="note">2026년 10월 19일 기준 조사 결과입니다. 매매 판단은 넣지 않았습니다. <b>[사실]</b>은 기사나 공시로 확인한 내용이고, <b>[추측]</b>은 증권사나 회사의 전망입니다.
+
+1. <b>[사실] 삼성바이오로직스 수주, 인수:</b> 이달에 발표된 대형 신규 수주 계약은 찾지 못했습니다. 회사는 10월에 바이오 재팬, CPHI 밀란, 월드 ADC 샌디에이고, BIX 등 4개 행사에 참가하며 고객 확보에 나섰습니다. 10월 16일에는 스위스 PolyPeptide 인수 공시를 정정해 양수 예정일을 11월 30일에서 12월 31일로 미뤘습니다. 응모 주식이 약 66.7% 이상일 때만 매수하는 조건입니다.
+2. <b>[사실] 삼성바이오로직스 파업:</b> 10월 16일 2심 법원이 바이오의약품 생산공정 9곳에서 쟁의행위를 금지했습니다. 다만 파업 기간에 새로 해동한 세포주 작업은 금지 범위에서 빠졌습니다. 노조는 불복 절차를 밟으면서 26일 시작 예정이던 3주 파업 계획을 다시 검토하고 있습니다.
+3. <b>[추측] 삼성바이오로직스 3분기 실적:</b> 한국투자증권은 파업이 강행돼도 실질적인 매출 타격은 제한적이라고 봤습니다. 3분기 예상치는 매출 1조3730억원, 영업이익 6180억원입니다. 현대차증권은 5공장 매출 확대와 미국 생산시설의 추가 수주를 성장 동력으로 꼽았습니다.
+4. <b>[사실] 셀트리온 바이오시밀러:</b> 옴리클로를 미국 현지 시간 10월 5일 출시했고, 가격은 오리지널보다 약 15% 낮은 도매가입니다. 동시에 대형 처방약급여관리업체 옵텀의 선호의약품으로 등재됐습니다. 트룩시마는 8월 기준 미국 점유율 약 39%로 처방 1위를 지키고 있습니다.
+5. <b>[사실] 셀트리온 임상, 허가:</b> 키트루다 바이오시밀러 'CT-P51'의 품목허가를 식약처에 신청했고(8월), 미국, 유럽, 캐나다에도 순차적으로 신청할 계획입니다. 일본에서는 옴리클로가 3월에 허가를 받고 출시를 준비하고 있습니다.
+6. <b>[추측] 셀트리온 미국 보험 등재:</b> 미국 대형 처방약급여관리업체와 고수익 바이오시밀러 등재 협상이 막바지이며 4분기 안에 계약할 것이라는 보도가 있습니다. 아직 체결된 것은 아닙니다.
+7. <b>[사실] 미국 관세(셀트리온, 삼성바이오로직스):</b> 9월 29일부터 의약품 관세가 실제로 부과되고 있습니다. 한국산 특허의약품은 15%이고, 제네릭과 바이오시밀러는 대상에서 빠졌습니다. ADC와 세포, 유전자치료제 등은 요건을 갖추면 0%입니다.
+8. <b>[사실] 관세 남은 위험:</b> 바이오시밀러 면제는 1년 뒤 다시 검토될 예정입니다. 트럼프 대통령은 제네릭에 2028년부터 100%, 2029년부터 200% 관세를 매기겠다고 말했습니다.
+9. <b>[사실] 미국 약가 규제:</b> 메디케어 약값이 최혜국 기준을 넘으면 초과분을 돌려줘야 합니다. 한국은 그 기준이 되는 19개 참조국에 포함돼 있어 새로운 위험으로 거론됩니다.
+10. <b>[추측] 미국 생산시설의 의미:</b> 삼성바이오로직스와 셀트리온은 미국 생산시설이 있어 관세 부담을 상대적으로 피할 수 있다는 분석이 있습니다.
+11. <b>[사실] 글로벌 업황:</b> 미국 바이오 지수(XBI)는 연초 대비 약 20% 올라 있지만, 2주 만에 8월 말 고점 169에서 약 146으로 떨어졌습니다. 미국 10년물 국채 금리가 2007년 이후 최고 수준인 점도 부담입니다.
+12. <b>[사실/추측] 인수합병 흐름:</b> 올해 상반기 인수합병 규모만 2025년 한 해와 맞먹었습니다. 한 애널리스트는 하락이 10~15% 더 이어질 수 있다고 경고했고, 매수세를 되돌릴 계기로는 인수합병이 꼽힙니다.
+13. <b>[추측] 종합:</b> 삼성바이오로직스는 파업 위험이 줄고 3분기 실적이 시장 기대에 맞을 것이라는 전망이 우세합니다. 셀트리온은 신제품 보험 등재가 실제 계약으로 이어지는지가 관건으로 보입니다. 해외 바이오 투자심리가 약해진 점은 두 종목 모두에 부담이 될 수 있습니다.</p></details></article><article class="card" style="--c:#4A5A86"><h3>거시경제 박사 윤매크로</h3><p class="diary">“미국 반도체가 한 주에 11% 무너졌는데 원화까지 세니 수출주는 쳐다볼 이유가 없다. 삼성전자는 발을 더 빼고, 금리 높을 때 돈 버는 은행과 생보, 그리고 셀트리온과 조선으로 버틴다. 22일 금통위, 29일 연준 결과가 나올 때까지 이 틀은 안 바꾼다.”</p><p class="reason">한미 모두 금리가 높고 추가 인상 기대가 남아 있어 은행과 생보 비중을 유지하고 삼성생명을 소폭 추가해 금리 수혜 축을 넓힌다. 환율 1,330원으로 원화 강세가 뚜렷하고 필라델피아 반도체지수가 한 주에 11% 급락했으므로 삼성전자는 8%로 줄이고 자동차는 계속 비운다. 유가 100달러 이상은 조선에 우호적이라 HD현대중공업은 유지하고, 환율과 반도체 충격에서 비교적 자유로운 셀트리온은 늘린다.</p><div class="k">보유</div><ul><li>KB금융 15주 <span class="up">+2.4%</span></li><li>신한지주 15주 <span class="down">-0.5%</span></li><li>셀트리온 10주 <span class="up">+2.2%</span></li><li>삼성전자 7주 <span class="up">+5.3%</span></li><li>HD현대중공업 4주 <span class="up">+1.3%</span></li><li class="muted">현금 14%</li></ul><div class="k">내일 계획</div><p class="plan">KB금융 25%, 신한지주 12%, 셀트리온 22%, HD현대중공업 13%, 삼성전자 8%, 삼성생명 8%</p><details><summary>오늘 조사 노트</summary><p class="note"><b>확인한 사실</b>
+1. 미국 증시(16일 마감): S&amp;P500은 1.09% 내린 7659.44, 나스닥은 2.15% 내린 2만6140.03에 마감했습니다. 일주일 동안 나스닥은 4.48%, 필라델피아 반도체지수는 11.41% 급락했고, 원인은 AI 인프라 기업 코어위브의 자금조달 불안입니다. → 삼성전자, SK하이닉스
+2. 국내 증시: 19일 코스피는 99.96포인트(1.76%) 오른 5768.01에 마감했습니다.
+3. 원달러 환율: 19일 1,330.3원으로, 2024년 10월 2일 이후 가장 낮은 수준입니다. 부총리는 이를 "경제 펀더멘털을 찾아가는 과정"이라고 평가했습니다. → 현대차, 기아, 삼성전자, LG전자
+4. 유가: 오피넷 기준 16일 두바이유 106.00, 브렌트유 109.86, WTI 101.41달러입니다. 15일까지 WTI는 6거래일 연속 올랐습니다. 사우디와 후티 반군의 충돌, 미국 원유 재고 감소가 원인으로 꼽힙니다. → LG화학, HD현대중공업
+5. 연준: 9월에 금리를 올려 현재 정책금리는 3.75~4.00%입니다. 9월 소비자물가는 1년 전보다 3.7% 올랐습니다. 다음 회의 결정은 한국시간 10월 29일 새벽 3시에 나오며, 다수 전문가는 이달 동결하고 다음 인상을 12월로 미룰 것으로 예상합니다.
+6. 한국은행: 7월과 8월에 연속으로 0.25%포인트씩 올려 현재 3.00%입니다. 22일 금통위를 앞두고 전문가 95%는 동결을 예상하고, 85.7%는 다음 인상 시기로 11월을 꼽았습니다. → KB금융, 신한지주, 삼성생명
+7. 트럼프 대통령은 "현대, 조지아주에 5억6000만 달러 투자 방금 발표"라고 밝혔습니다. → 현대차, 현대모비스
+8. 미국 국채 금리: 공신력 있는 출처는 찾지 못했습니다. 한 비주류 사이트는 2년물 4.77%, 10년물 5.1%로 적었지만 확인되지 않은 수치라 다시 확인해야 합니다.
+
+<b>추측 (확인 안 됨)</b>
+• 미국 반도체 급락의 영향이 삼성전자와 SK하이닉스에 단기 부담으로 이어질 수 있습니다.
+• 원화가 강해지면 현대차, 기아, LG전자의 원화 기준 수출 이익이 줄어들 수 있습니다.
+• 한미 양국이 금리를 더 올리는 흐름은 KB금융, 신한지주, 삼성생명의 이자 수익에 유리하게 작용할 수 있습니다.
+• 배럴당 100달러를 넘는 유가는 LG화학에는 원가 부담이 되고, 해양 설비 발주가 늘면 HD현대중공업에는 도움이 될 수 있습니다.</p></details></article><article class="card" style="--c:#6B675C"><h3>배당 지킴이 오배당</h3><p class="diary">“배터리랑 바이오가 하루에 10%씩 뛰니 눈은 가지만, 그런 롤러코스터는 내 체질이 아니다. 금통위까지 사흘, 은행주 두 숟갈만 쥐고 현금은 그대로 묵혀둔다.”</p><p class="reason">오늘 반등은 2차전지, 바이오 같은 변동성 큰 업종이 주도했고 반도체는 5일간 13~20% 빠진 뒤라 추세가 안정됐다고 보기 어렵다. 22일 금통위 결과와 KB금융, 신한지주의 3분기 실적 공시를 확인하기 전까지는 현금 81%를 유지하는 게 잃지 않는 길이다. 보유 중인 은행주는 배당 분리과세 요건을 충족한 고배당주라 그대로 들고 간다.</p><div class="k">보유</div><ul><li>신한지주 8주 <span class="down">-0.5%</span></li><li>KB금융 7주 <span class="up">+2.4%</span></li><li class="muted">현금 81%</li></ul><div class="k">내일 계획</div><p class="plan">그대로 유지</p><details><summary>오늘 조사 노트</summary><p class="note"><b>2026-10-19 기준 조사 요약</b> (①=확인한 사실, ②=추측, 전망)
+
+1. 금리 ①: 한국은행은 7월 16일 기준금리를 3년 6개월 만에 2.75%로 올렸고, 8월 27일 한 번 더 올려 3%가 됐습니다. 남은 결정일은 10월 22일과 11월 26일입니다.
+2. 금리 ②: 시장에서는 한국은행이 22일 금리를 연 3.00%로 동결하면서도 물가와 가계부채 부담 때문에 추가 인상 가능성은 열어둘 것으로 봅니다. 금리가 높게 유지되는 건 KB금융, 신한지주의 이자이익에는 유리할 수 있지만 대출 부실 위험도 커질 수 있다고 봅니다(제 추측).
+3. 환율 ①: 10월 12일 원, 달러 환율은 1,335.1원으로 2024년 10월 이후 가장 낮았습니다. 다음 날에는 외국인이 주식을 대거 팔아 코스피가 급락하면서 1,345.1원으로 올랐습니다.
+4. 환율 ②: 트레이딩 이코노믹스는 이번 분기 말 환율을 1,325원 수준으로 예상합니다. 원화 강세가 이어지면 삼성전자, SK하이닉스, 현대차, 기아 같은 수출주의 원화 기준 이익이 줄어들 수 있습니다(제 추측).
+5. 배당 세제 ①: 고배당 기업 배당소득은 2천만원 이하 14%, 50억원 초과 30% 등으로 분리과세됩니다. 밸류업 공시를 하고 배당을 늘린 기업이 대상이며, 2028년까지 3년 한시 제도입니다.
+6. KB금융 ①: 2025년 4분기 주당배당금을 1,605원으로 정해 전년(804원)의 약 2배로 늘렸고, 배당성향 27%로 분리과세 요건을 충족했습니다. 2026년 1차 주주환원 규모는 역대 최대인 2조 8,200억원입니다.
+7. 신한지주 ①: KB금융, 하나금융과 함께 분리과세 요건을 충족했습니다. ②: 증권가 분석에서는 KB금융과 함께 안정적인 자본비율과 높은 주주환원율로 시장에서 프리미엄을 받고 있다는 평가가 나옵니다. 다만 10월 기준 최신 소식은 확인하지 못했습니다.
+8. 삼성생명 ①: 금감원 지침에 따라 회계처리(일탈회계)를 바꾸면서 유배당 계약자 배당 의무 7조7477억원이 부채에서 자본으로 옮겨졌고, 자본은 21% 늘었습니다. 작년 배당성향은 41.3%였고, 2028년까지 50%로 올릴 계획입니다.
+9. 삼성생명 ②: 계열사 지분을 10% 이하로 유지해야 하는 규제가 있는데, 삼성생명과 삼성화재의 삼성전자 합산 지분율이 딱 10%입니다. 그래서 지분 매각 차익을 배당에 쓸 거라는 기대가 있습니다. 그러나 회사는 매각 시점과 규모를 예측하기 어렵다며 배당 비율을 밝히지 않았습니다. 계약자에게는 배당하지 않으면서 주주에게 특별배당을 하면 형평성 논란이 다시 불거질 수 있다는 지적도 있습니다.
+10. 삼성물산 ①: 2026~2028년 삼성전자, 삼성생명 등 관계사에서 받는 배당의 60~70%를 다시 주주에게 배당합니다. ②: DS투자증권은 2026년 주당배당금을 2만3050원(배당수익률 4.8%)으로 추정했습니다.
+11. SK텔레콤 ①: 해킹 사고 여파로 2025년 영업이익이 41.1% 줄었고, 3분기에 이어 기말 배당도 하지 않았습니다. 올해 1분기 배당을 재개해 두 분기 연속 주당 830원을 지급했고, 시가배당률은 0.9%였습니다.
+12. SK텔레콤 ①, ②: 자본준비금 1조7000억원을 이익잉여금으로 바꿔 올해 기말 배당부터 비과세 배당이 가능해졌습니다. 연간 배당 규모는 실적과 재무 구조를 보고 이사회에서 결정한다는 입장이라 아직 정해지지 않았습니다.
+13. 밸류업 전반 ②: 은행주가 정부 밸류업 정책의 최대 수혜 업종이라는 분석이 있지만, 이는 증권가 의견이지 확정된 사실은 아닙니다.
+14. 확인하지 못한 것: 3분기 실적 발표 일정, KB금융, 신한지주, 삼성생명의 10월 최신 공시, 통신사 3분기 배당 결정은 이번 검색에서 찾지 못했습니다.</p></details></article></div>
+<h2>최근 거래</h2><table class="trades"><tr><td>10-19</td><td>김버핏</td><td class="up">매수</td><td>삼성전자</td><td class="num">9주</td><td class="num hide-m">207,000</td><td class="num"></td></tr><tr><td>10-19</td><td>김버핏</td><td class="up">매수</td><td>현대차</td><td class="num">4주</td><td class="num hide-m">304,500</td><td class="num"></td></tr><tr><td>10-19</td><td>김버핏</td><td class="up">매수</td><td>기아</td><td class="num">13주</td><td class="num hide-m">109,500</td><td class="num"></td></tr><tr><td>10-19</td><td>김버핏</td><td class="up">매수</td><td>KB금융</td><td class="num">9주</td><td class="num hide-m">158,900</td><td class="num"></td></tr><tr><td>10-19</td><td>김버핏</td><td class="up">매수</td><td>신한지주</td><td class="num">10주</td><td class="num hide-m">93,800</td><td class="num"></td></tr><tr><td>10-19</td><td>박모멘텀</td><td class="up">매수</td><td>LG에너지솔루션</td><td class="num">7주</td><td class="num hide-m">397,000</td><td class="num"></td></tr><tr><td>10-19</td><td>박모멘텀</td><td class="up">매수</td><td>셀트리온</td><td class="num">15주</td><td class="num hide-m">193,900</td><td class="num"></td></tr><tr><td>10-19</td><td>박모멘텀</td><td class="up">매수</td><td>삼성SDI</td><td class="num">1주</td><td class="num hide-m">513,000</td><td class="num"></td></tr><tr><td>10-19</td><td>이속보</td><td class="up">매수</td><td>삼성전자</td><td class="num">12주</td><td class="num hide-m">207,000</td><td class="num"></td></tr><tr><td>10-19</td><td>이속보</td><td class="up">매수</td><td>셀트리온</td><td class="num">10주</td><td class="num hide-m">193,900</td><td class="num"></td></tr><tr><td>10-19</td><td>이속보</td><td class="up">매수</td><td>삼성바이오로직스</td><td class="num">1주</td><td class="num hide-m">1,290,000</td><td class="num"></td></tr><tr><td>10-19</td><td>이속보</td><td class="up">매수</td><td>현대차</td><td class="num">3주</td><td class="num hide-m">304,500</td><td class="num"></td></tr><tr><td>10-19</td><td>최반대</td><td class="up">매수</td><td>삼성전자</td><td class="num">14주</td><td class="num hide-m">207,000</td><td class="num"></td></tr><tr><td>10-19</td><td>최반대</td><td class="up">매수</td><td>SK하이닉스</td><td class="num">1주</td><td class="num hide-m">1,212,000</td><td class="num"></td></tr><tr><td>10-19</td><td>최반대</td><td class="up">매수</td><td>HD현대중공업</td><td class="num">5주</td><td class="num hide-m">341,000</td><td class="num"></td></tr><tr><td>10-19</td><td>최반대</td><td class="up">매수</td><td>삼성생명</td><td class="num">6주</td><td class="num hide-m">238,500</td><td class="num"></td></tr><tr><td>10-19</td><td>정반도</td><td class="up">매수</td><td>SK하이닉스</td><td class="num">2주</td><td class="num hide-m">1,212,000</td><td class="num"></td></tr><tr><td>10-19</td><td>정반도</td><td class="up">매수</td><td>삼성전자</td><td class="num">14주</td><td class="num hide-m">207,000</td><td class="num"></td></tr><tr><td>10-19</td><td>한바이오</td><td class="up">매수</td><td>셀트리온</td><td class="num">20주</td><td class="num hide-m">193,900</td><td class="num"></td></tr><tr><td>10-19</td><td>한바이오</td><td class="up">매수</td><td>삼성바이오로직스</td><td class="num">1주</td><td class="num hide-m">1,290,000</td><td class="num"></td></tr></table>
+<h2>지난 기록</h2><p class="muted">2026-10-19 마감 때 저장한 페이지예요. <a href="../index.html">오늘 페이지로</a></p><footer>2026-10-16 시작. 주문은 다음 거래일 시가에 체결, 매도 시 약 0.2% 비용 반영.<br>
+지금 크레딧 구간 사용액 약 $5.22 / $97.
+누적 $21.41, 입력 2,180,065 토큰, 출력 78,406 토큰, 웹 검색 119회.</footer>
+</div></body></html>
