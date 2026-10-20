@@ -53,7 +53,7 @@ CREDIT_WINDOWS = [
      "research_model": "claude-fable-5-1", "search_max": 10},
     # 11/18(UTC) 만료 크레딧 100달러: 약 22거래일에 나눠 쓰기
     {"id": "promo-1118", "start": "2026-10-18", "end": "2026-11-17", "budget": 97.0,
-     "research_model": "claude-opus-5-5", "search_max": 5},
+     "research_model": "claude-sonnet-5-5", "search_max": 6},
 ]
 
 
@@ -79,12 +79,13 @@ PRICES = {
 }
 SEARCH_PRICE = 0.01
 START_CASH = 10_000_000
-BUY_FEE = 0.00015            # 매수 수수료 0.015%
-SELL_FEE = 0.00015 + 0.002   # 매도 수수료 0.015% + 거래세 약 0.2% (단순화)
+BUY_FEE = 0.00015            # 한국 매수 수수료 0.015%
+SELL_FEE = 0.00015 + 0.002   # 한국 매도 수수료 0.015% + 거래세 약 0.2% (단순화)
+US_FEE = 0.001               # 미국 매수, 매도 각각 약 0.1% (수수료와 환전 비용, 세금 없음으로 단순화)
 MAX_WEIGHT = 40.0            # 한 종목 최대 비중(%)
 JOURNAL_KEEP = 60            # 선수별 일지 보관 개수
 
-UNIVERSE = {
+UNIVERSE_KR = {
     "005930.KS": "삼성전자",
     "000660.KS": "SK하이닉스",
     "373220.KS": "LG에너지솔루션",
@@ -106,8 +107,22 @@ UNIVERSE = {
     "032830.KS": "삼성생명",
     "329180.KS": "HD현대중공업",
 }
+UNIVERSE_US = {
+    "AAPL": "애플", "MSFT": "마이크로소프트", "NVDA": "엔비디아", "GOOGL": "알파벳",
+    "AMZN": "아마존", "META": "메타", "TSLA": "테슬라", "AVGO": "브로드컴",
+    "AMD": "AMD", "TSM": "TSMC", "LLY": "일라이릴리", "JPM": "JP모건",
+    "XOM": "엑슨모빌", "COST": "코스트코", "NFLX": "넷플릭스",
+}
+UNIVERSE = {**UNIVERSE_KR, **UNIVERSE_US}
 BENCH = "069500.KS"  # KODEX 200
 BENCH_NAME = "KOSPI200 지수"
+BENCH_US = "SPY"     # S&P500 ETF, 원화로 환산해 비교
+BENCH_US_NAME = "S&P500 지수"
+FX = "KRW=X"         # 원달러 환율
+
+
+def is_us(t):
+    return t in UNIVERSE_US or t == BENCH_US
 
 PLAYERS = {
     "value": {
@@ -142,7 +157,7 @@ PLAYERS = {
             "당신은 뉴스에 반응하는 단기 트레이더다. 오늘 나온 실적, 정책, 업황 뉴스를 보고 "
             "수혜가 예상되는 종목을 사고 악재가 나온 종목은 판다. 뉴스가 별로 없으면 관망한다."
         ),
-        "research": "오늘 한국 증시 마감 시황과 종목별 실적 발표, 정책, 수주, 업황 뉴스",
+        "research": "오늘 한국 증시 마감 시황, 지난밤 미국 증시와 빅테크 뉴스, 종목별 실적 발표, 정책, 수주, 업황 뉴스",
     },
     "contrarian": {
         "name": "역발상 최반대",
@@ -161,10 +176,10 @@ PLAYERS = {
         "kind": "llm",
         "color": "#B8860B",
         "persona": (
-            "당신은 반도체와 IT 하드웨어만 깊게 파는 전문 투자자다. 삼성전자, SK하이닉스를 중심으로 "
-            "LG전자, 삼성SDI 같은 관련주만 다룬다. 업황이 나쁘다고 판단하면 현금 비중을 크게 늘린다."
+            "당신은 반도체와 IT 하드웨어만 깊게 파는 전문 투자자다. 삼성전자, SK하이닉스, 엔비디아, AMD, TSMC, 브로드컴을 중심으로 "
+            "반도체 관련주만 다룬다. 업황이 나쁘다고 판단하면 현금 비중을 크게 늘린다."
         ),
-        "research": "메모리 반도체 가격, HBM, AI 서버 수요, 엔비디아 등 해외 반도체 업황과 삼성전자, SK하이닉스 소식",
+        "research": "메모리 반도체 가격, HBM, AI 서버 수요, 엔비디아, AMD, TSMC, 브로드컴 실적과 주가, 삼성전자, SK하이닉스 소식",
     },
     "bio": {
         "name": "바이오 전문가 한바이오",
@@ -172,10 +187,10 @@ PLAYERS = {
         "kind": "llm",
         "color": "#1F8A8A",
         "persona": (
-            "당신은 바이오 전문 투자자다. 삼성바이오로직스와 셀트리온을 주로 다루고, 바이오에 확신이 없을 땐 "
+            "당신은 바이오 전문 투자자다. 삼성바이오로직스, 셀트리온, 일라이릴리를 주로 다루고, 바이오에 확신이 없을 땐 "
             "다른 대형주나 현금으로 피신한다. 임상, 수주, 규제 뉴스에 민감하다."
         ),
-        "research": "삼성바이오로직스, 셀트리온의 수주, 임상, 바이오시밀러, 미국 관세와 규제 소식, 글로벌 바이오 업황",
+        "research": "삼성바이오로직스, 셀트리온의 수주, 임상, 바이오시밀러, 일라이릴리 비만약과 실적, 미국 관세와 규제 소식, 글로벌 바이오 업황",
     },
     "defensive": {
         "name": "배당 지킴이 오배당",
@@ -183,10 +198,10 @@ PLAYERS = {
         "kind": "llm",
         "color": "#6B675C",
         "persona": (
-            "당신은 잃지 않는 게 최우선인 방어형 투자자다. 금융, 통신, 보험처럼 배당이 높고 덜 흔들리는 종목을 "
+            "당신은 잃지 않는 게 최우선인 방어형 투자자다. 금융, 통신, 보험, 필수소비재, 에너지처럼 배당이 높고 덜 흔들리는 종목을 "
             "선호하고, 시장이 불안하면 현금을 늘린다. 매매는 적게 한다."
         ),
-        "research": "금리, 환율, 배당 정책, 밸류업 프로그램, 은행과 보험, 통신사 관련 소식",
+        "research": "금리, 환율, 배당 정책, 밸류업 프로그램, 한국 은행과 보험, 통신사, JP모건, 엑슨모빌, 코스트코 관련 소식",
     },
     "flow": {
         "name": "수급 추종자 강수급",
@@ -197,7 +212,7 @@ PLAYERS = {
             "당신은 외국인과 기관 수급을 따라가는 투자자다. 큰손이 며칠째 사는 종목을 따라 사고, "
             "큰손이 팔기 시작하면 먼저 뺀다. 2~5종목."
         ),
-        "research": "오늘과 최근 며칠 외국인, 기관 순매수와 순매도 상위 종목, 프로그램 매매 동향",
+        "research": "한국 외국인, 기관 순매수와 순매도 상위 종목, 미국 대형 기술주 자금 흐름과 ETF 유출입",
     },
     "macro": {
         "name": "거시경제 박사 윤매크로",
@@ -208,7 +223,7 @@ PLAYERS = {
             "당신은 금리, 환율, 미국 증시, 유가 같은 거시 변수로 업종을 고르는 투자자다. "
             "환율이 오르면 수출주, 금리가 오르면 금융주처럼 큰 흐름에 맞춰 비중을 조절한다. 3~6종목."
         ),
-        "research": "미국 증시 마감, 미국 국채 금리, 원달러 환율, 유가, 한국은행과 연준 관련 최신 소식",
+        "research": "미국 증시 마감과 업종별 흐름, 미국 국채 금리, 원달러 환율, 유가, 한국은행과 연준 관련 최신 소식",
     },
     "chart": {
         "name": "차트 장인 서캔들",
@@ -237,7 +252,7 @@ PLAYERS = {
 def fetch_prices() -> dict[str, pd.DataFrame]:
     import yfinance as yf
 
-    tickers = list(UNIVERSE) + [BENCH]
+    tickers = list(UNIVERSE) + [BENCH, BENCH_US, FX]
     raw = yf.download(tickers, period="6mo", interval="1d", group_by="ticker",
                       auto_adjust=False, progress=False, threads=True)
     out = {}
@@ -256,13 +271,41 @@ def fake_prices(n_days: int, end: date, seed: int = 7) -> dict[str, pd.DataFrame
     rng = np.random.default_rng(seed)
     days = pd.bdate_range(end=end, periods=n_days).date
     out = {}
-    for i, t in enumerate(list(UNIVERSE) + [BENCH]):
+    for i, t in enumerate(list(UNIVERSE) + [BENCH, BENCH_US, FX]):
         drift = rng.normal(0.0004, 0.0008)
-        vol = 0.012 if t == BENCH else rng.uniform(0.015, 0.03)
-        close = 50_000 * (1 + i * 0.3) * np.exp(np.cumsum(rng.normal(drift, vol, n_days)))
+        vol = 0.004 if t == FX else 0.012 if t in (BENCH, BENCH_US) else rng.uniform(0.015, 0.03)
+        base = 1400 if t == FX else (100 + i * 20) if is_us(t) else 50_000 * (1 + i * 0.3)
+        close = base * np.exp(np.cumsum(rng.normal(0 if t == FX else drift, vol, n_days)))
         open_ = close * np.exp(rng.normal(0, vol / 3, n_days))
-        out[t] = pd.DataFrame({"Open": open_.round(-1), "Close": close.round(-1)}, index=days)
+        nd = 2 if (is_us(t) or t == FX) else -1
+        out[t] = pd.DataFrame({"Open": open_.round(nd), "Close": close.round(nd)}, index=days)
     return out
+
+
+def fx_at(data, d):
+    """d 이전(포함) 마지막 원달러 환율."""
+    df = data.get(FX)
+    if df is not None:
+        s = df.loc[:d, "Close"].dropna()
+        if len(s):
+            return float(s.iloc[-1])
+    return 1400.0
+
+
+def us_exec_date(data, since, d):
+    """since(주문 낸 날, KST) 이후 처음 열린 미국장 날짜. 아직 없으면 None.
+    한국 시간 오후에 낸 주문은 그날 밤(미국 날짜로 같은 날) 미국장 시가에 체결된다."""
+    df = data.get(BENCH_US)
+    if df is None or since is None:
+        return None
+    for x in df.index:
+        if since <= x < d:
+            return x
+    return None
+
+
+def krw(data, t, price, d):
+    return price * fx_at(data, d) if (price and is_us(t)) else price
 
 
 def px(data, t, d, col):
@@ -291,11 +334,15 @@ def market_table(data, d) -> tuple[str, dict]:
         hi60 = float(c.iloc[-60:].max())
         s = {"close": last, "r1": ret(1), "r5": ret(5), "r20": ret(20), "r60": ret(60),
              "vol": vol20, "from_hi": (last / hi60 - 1) * 100}
+        s["close_krw"] = krw(data, t, last, d)
+        s["us"] = is_us(t)
         stats[t] = s
-        rows.append(f"{t} {name} | 종가 {last:,.0f} | 1일 {s['r1']:+.1f}% | 5일 {s['r5']:+.1f}% | "
+        unit = f"${last:,.2f}" if is_us(t) else f"{last:,.0f}원"
+        rows.append(f"{t} {name} | 종가 {unit} | 1일 {s['r1']:+.1f}% | 5일 {s['r5']:+.1f}% | "
                     f"20일 {s['r20']:+.1f}% | 60일 {s['r60']:+.1f}% | 변동성 {vol20:.0f}% | "
                     f"60일 고점 대비 {s['from_hi']:+.1f}%")
-    return "\n".join(rows), stats
+    head = (f"[한국 종목은 한국 종가 기준, 미국 종목은 지난밤 미국 종가 기준(달러). 원달러 환율 {fx_at(data, d):,.1f}원]\n")
+    return head + "\n".join(rows), stats
 
 
 # ---------------------------------------------------------------------------
@@ -305,6 +352,7 @@ def market_table(data, d) -> tuple[str, dict]:
 def new_state(d: date) -> dict:
     st = {"start_date": d.isoformat(), "last_date": None, "players": {},
           "bench": {"shares": 0, "cash": START_CASH, "history": []},
+          "bench_us": {"shares": 0, "cash": START_CASH, "history": []},
           "usage": {"input_tokens": 0, "output_tokens": 0, "web_searches": 0,
                     "cost_usd": 0.0, "by_month": {}}}
     return ensure_players(st)
@@ -315,6 +363,7 @@ def ensure_players(st: dict) -> dict:
     for pid in PLAYERS:
         st["players"].setdefault(pid, {"cash": START_CASH, "positions": {}, "cost": {},
                                        "pending": None, "history": [], "journal": [], "trades": []})
+    st.setdefault("bench_us", {"shares": 0, "cash": START_CASH, "history": []})
     u = st.setdefault("usage", {})
     for k, v in {"input_tokens": 0, "output_tokens": 0, "web_searches": 0,
                  "cost_usd": 0.0, "by_month": {}}.items():
@@ -336,9 +385,13 @@ def save_state(st: dict):
 def equity_at(p, data, d, col="Close"):
     total = p["cash"]
     for t, sh in p["positions"].items():
-        price = px(data, t, d, col) or _last_close(data, t, d)
-        total += sh * (price or 0)
+        total += sh * (last_krw(data, t, d) or 0)
     return total
+
+
+def last_krw(data, t, d):
+    """d 이전(포함) 마지막 종가를 원화로."""
+    return krw(data, t, _last_close(data, t, d), d)
 
 
 def _last_close(data, t, d):
@@ -349,14 +402,24 @@ def _last_close(data, t, d):
     return float(s.iloc[-1]) if len(s) else None
 
 
-def rebalance(p, targets: dict[str, float], data, d):
-    """목표 비중(%)대로 오늘 시가에 맞춘다. 매도 먼저, 그다음 매수."""
-    prices = {t: px(data, t, d, "Open") for t in set(targets) | set(p["positions"])}
-    eq = p["cash"] + sum(sh * (prices.get(t) or 0) for t, sh in p["positions"].items())
+def rebalance(p, targets: dict[str, float], data, d, us_date=None):
+    """목표 비중(%)대로 맞춘다. 한국 종목은 오늘 한국장 시가, 미국 종목은 주문 뒤 처음 열린 미국장 시가(원화 환산).
+    체결 가격이 없는 종목(미국 휴장 등)은 이번에는 건드리지 않는다. 매도 먼저, 그다음 매수."""
+    prices, native, when = {}, {}, {}
+    for t in set(targets) | set(p["positions"]):
+        if is_us(t):
+            o = px(data, t, us_date, "Open") if us_date else None
+            native[t], prices[t], when[t] = o, krw(data, t, o, us_date) if o else None, us_date
+        else:
+            o = px(data, t, d, "Open")
+            native[t], prices[t], when[t] = o, o, d
+    eq = p["cash"] + sum(sh * (prices.get(t) or last_krw(data, t, d) or 0) for t, sh in p["positions"].items())
+    buy_fee = lambda t: US_FEE if is_us(t) else BUY_FEE
+    sell_fee = lambda t: US_FEE if is_us(t) else SELL_FEE
     want = {}
     for t, w in targets.items():
         if prices.get(t):
-            want[t] = int(eq * w / 100 // (prices[t] * (1 + BUY_FEE)))
+            want[t] = int(eq * w / 100 // (prices[t] * (1 + buy_fee(t))))
     # 매도
     for t, sh in list(p["positions"].items()):
         price = prices.get(t)
@@ -364,10 +427,10 @@ def rebalance(p, targets: dict[str, float], data, d):
             continue
         diff = sh - want.get(t, 0)
         if diff > 0:
-            p["cash"] += diff * price * (1 - SELL_FEE)
+            p["cash"] += diff * price * (1 - sell_fee(t))
             pnl = (price / p["cost"].get(t, price) - 1) * 100
-            p["trades"].append({"date": d.isoformat(), "side": "매도", "ticker": t,
-                                "shares": diff, "price": price, "pnl": round(pnl, 2)})
+            p["trades"].append({"date": when[t].isoformat(), "side": "매도", "ticker": t,
+                                "shares": diff, "price": native[t], "pnl": round(pnl, 2)})
             p["positions"][t] = sh - diff
             if p["positions"][t] == 0:
                 del p["positions"][t]
@@ -379,15 +442,15 @@ def rebalance(p, targets: dict[str, float], data, d):
         diff = target_sh - cur
         if diff <= 0:
             continue
-        diff = min(diff, int(p["cash"] // (price * (1 + BUY_FEE))))
+        diff = min(diff, int(p["cash"] // (price * (1 + buy_fee(t)))))
         if diff <= 0:
             continue
-        p["cash"] -= diff * price * (1 + BUY_FEE)
+        p["cash"] -= diff * price * (1 + buy_fee(t))
         old_cost = p["cost"].get(t, price)
         p["cost"][t] = (old_cost * cur + price * diff) / (cur + diff)
         p["positions"][t] = cur + diff
-        p["trades"].append({"date": d.isoformat(), "side": "매수", "ticker": t,
-                            "shares": diff, "price": price})
+        p["trades"].append({"date": when[t].isoformat(), "side": "매수", "ticker": t,
+                            "shares": diff, "price": native[t]})
     p["trades"] = p["trades"][-200:]
 
 
@@ -408,7 +471,7 @@ def clean_targets(raw) -> dict[str, float]:
 # ---------------------------------------------------------------------------
 SUBMIT_TOOL = {
     "name": "submit_orders",
-    "description": "내일 시가에 맞출 목표 포트폴리오를 제출한다.",
+    "description": "목표 포트폴리오를 제출한다. 한국 종목은 내일 한국장 시가, 미국 종목은 오늘 밤 미국장 시가에 맞춘다.",
     "input_schema": {
         "type": "object",
         "properties": {
@@ -416,7 +479,7 @@ SUBMIT_TOOL = {
                              "description": "true면 지금 포트폴리오를 그대로 둔다(targets 무시)."},
             "targets": {
                 "type": "array",
-                "description": "종목별 목표 비중(%). 합이 100 이하, 나머지는 현금.",
+                "description": "종목별 목표 비중(%). 한국과 미국 종목을 합쳐 전체 자산 기준, 합이 100 이하, 나머지는 원화 현금.",
                 "items": {"type": "object",
                           "properties": {"ticker": {"type": "string"},
                                          "weight": {"type": "number"}},
@@ -435,10 +498,11 @@ def holdings_text(p, stats):
         return "보유 종목 없음"
     lines = []
     for t, sh in p["positions"].items():
-        cur = stats.get(t, {}).get("close")
+        cur = stats.get(t, {}).get("close_krw")
         cost = p["cost"].get(t)
         pnl = f"{(cur / cost - 1) * 100:+.1f}%" if cur and cost else "?"
-        lines.append(f"{t} {UNIVERSE.get(t, t)} {sh}주 (평단 {cost:,.0f}, 수익률 {pnl})")
+        val = f", 평가 {sh * cur:,.0f}원" if cur else ""
+        lines.append(f"{t} {UNIVERSE.get(t, t)} {sh}주 (원화 평단 {cost:,.0f}원, 수익률 {pnl}{val})")
     return "\n".join(lines)
 
 
@@ -447,8 +511,10 @@ def build_prompt(pid, p, table, stats, d, equity, news=None):  # news = 내 조�
     ret = (equity / START_CASH - 1) * 100
     parts = [
         f"오늘은 {d.isoformat()} 한국 증시 마감 직후다. 가상 1천만 원으로 하는 모의투자 대회에 참가 중이다.",
-        f"규칙: 아래 20개 종목만 거래 가능. 한 종목 최대 {MAX_WEIGHT:.0f}%. 주문은 내일 시가에 체결된다. "
-        "매도할 때 약 0.2% 비용이 든다. 다른 참가자보다 수익률이 높아야 한다.",
+        f"규칙: 아래 한국 {len(UNIVERSE_KR)}개, 미국 {len(UNIVERSE_US)}개 종목만 거래 가능. 한 종목 최대 {MAX_WEIGHT:.0f}%. "
+        "비중은 한국과 미국을 합친 전체 자산 기준이고, 미국 종목은 원화를 달러로 바꿔 산다(환율 변동도 수익률에 반영). "
+        "한국 종목은 내일 한국장 시가, 미국 종목은 오늘 밤 미국장 시가에 체결된다. "
+        "한국 종목은 팔 때 약 0.2%, 미국 종목은 사고팔 때 각각 약 0.1% 비용이 든다. 다른 참가자보다 수익률이 높아야 한다.",
         f"\n[내 상태]\n총자산 {equity:,.0f}원 (시작 대비 {ret:+.2f}%), 현금 {p['cash']:,.0f}원\n"
         + holdings_text(p, stats),
         f"\n[최근 내 일기]\n{recent}",
@@ -481,9 +547,14 @@ def pick_model(usage, d):
         return None, False                      # 예산 소진
     remaining = budget - spent
     days_left = max(1, len(pd.bdate_range(d, date.fromisoformat(w["end"]))))
-    if remaining / days_left < 1.0:             # 하루 1달러도 안 남으면 싼 모델, 조사 생략
-        return FALLBACK_MODEL, False
-    return MODEL, True
+    allowance = remaining / days_left           # 남은 거래일에 고르게 나눈 오늘 몫
+    if allowance >= 4.0:
+        return MODEL, True                      # Fable 판단 + 조사
+    if allowance >= 2.0:
+        return "claude-opus-5-5", True          # 조금 빠듯하면 판단을 Opus로
+    if allowance >= 0.8:
+        return FALLBACK_MODEL, True             # 더 빠듯하면 Sonnet 판단 + 조사
+    return FALLBACK_MODEL, False                # 거의 없으면 조사 생략
 
 
 def call_claude(client, usage, d, model, **kw):
@@ -509,6 +580,7 @@ def research(client, usage, d, model, pid):
     focus = PLAYERS[pid].get("research", "오늘 한국 증시 주요 뉴스")
     msgs = [{"role": "user", "content":
              f"{d.isoformat()} 기준으로 웹에서 다음을 조사해서 15줄 이내로 정리해줘: {focus}. "
+             "한국과 미국 시장을 모두 본다. "
              f"관련 종목명을 꼭 붙이고, 확인한 사실과 추측을 구분해. 거래 가능 종목: {names}. "
              "이 단계는 조사만 한다. 매수, 매도, 유지 같은 결정이나 비중 제안은 쓰지 말고, "
              "변수 이름이나 코드 같은 프로그램 용어도 쓰지 마."}]
@@ -557,6 +629,10 @@ def decide_mock(pid, p, stats, d):
     """--dry-run 용 가짜 판단. API를 부르지 않는다."""
     rng = random.Random(f"{pid}{d}")
     ranked = sorted(stats, key=lambda t: stats[t]["r20"], reverse=True)
+    if pid == "semi":
+        picks = ["005930.KS", "000660.KS", "NVDA"]
+        return {"keep_current": False, "targets": [{"ticker": t, "weight": 30} for t in picks],
+                "reason": "가짜 판단(dry-run)", "diary": "HBM과 GPU가 답이다."}
     if pid == "contrarian":
         picks = ranked[-3:]
         diary = f"다들 {UNIVERSE[picks[0]]}를 버릴 때 나는 줍는다."
@@ -601,22 +677,32 @@ def decide_monkey(p, d):
 # ---------------------------------------------------------------------------
 
 def run_day(st, data, d, client=None, dry=False):
-    # 1) 어제 주문 체결
+    # 1) 지난번 주문 체결 (한국은 오늘 시가, 미국은 주문 뒤 처음 열린 미국장 시가)
+    prev = date.fromisoformat(st["last_date"]) if st["last_date"] else None
+    us_date = us_exec_date(data, prev, d)
     for pid, p in st["players"].items():
         if p["pending"] is not None:
-            rebalance(p, p["pending"], data, d)
+            rebalance(p, p["pending"], data, d, us_date)
             p["pending"] = None
     b = st["bench"]
     if b["shares"] == 0 and px(data, BENCH, d, "Open"):
         o = px(data, BENCH, d, "Open")
         b["shares"] = int(b["cash"] // (o * (1 + BUY_FEE)))
         b["cash"] -= b["shares"] * o * (1 + BUY_FEE)
+    bu = st["bench_us"]
+    if bu["shares"] == 0 and us_date and px(data, BENCH_US, us_date, "Open"):
+        o = krw(data, BENCH_US, px(data, BENCH_US, us_date, "Open"), us_date)
+        bu["shares"] = int(bu["cash"] // (o * (1 + US_FEE)))
+        bu["cash"] -= bu["shares"] * o * (1 + US_FEE)
 
     # 2) 평가
     for pid, p in st["players"].items():
         p["history"].append({"date": d.isoformat(), "equity": round(equity_at(p, data, d))})
     bc = px(data, BENCH, d, "Close") or _last_close(data, BENCH, d) or 0
     b["history"].append({"date": d.isoformat(), "equity": round(b["cash"] + b["shares"] * bc)})
+    if bu["shares"] or bu["history"]:
+        bu["history"].append({"date": d.isoformat(),
+                              "equity": round(bu["cash"] + bu["shares"] * (last_krw(data, BENCH_US, d) or 0))})
 
     # 3) 내일 주문
     table, stats = market_table(data, d)
@@ -684,6 +770,8 @@ def chart_svg(st):
     series = [(PLAYERS[pid]["name"], PLAYERS[pid]["color"], p["history"])
               for pid, p in st["players"].items()]
     series.append((BENCH_NAME, "var(--bench)", st["bench"]["history"]))
+    if st.get("bench_us", {}).get("history"):
+        series.append((BENCH_US_NAME, "var(--bench)", st["bench_us"]["history"]))
     n = max(len(h) for _, _, h in series)
     if n < 2:
         return "<p class='muted'>이틀 이상 쌓이면 그래프가 그려져요.</p>"
@@ -715,7 +803,8 @@ def chart_svg(st):
         off = n - len(h)
         pts = " ".join(f"{x(i + off):.1f},{y((e['equity'] / START_CASH - 1) * 100):.1f}"
                        for i, e in enumerate(h))
-        dash = ' stroke-dasharray="5 4"' if name == BENCH_NAME else ""
+        dash = (' stroke-dasharray="5 4"' if name == BENCH_NAME
+                else ' stroke-dasharray="1.5 3.5" stroke-linecap="round"' if name == BENCH_US_NAME else "")
         out.append(f'<polyline points="{pts}" fill="none" stroke="{color}" stroke-width="2.2"{dash}>'
                    f'<title>{esc(name)}</title></polyline>')
     out.append("</svg>")
@@ -743,9 +832,16 @@ def render(st, data=None):
             f'<td class="num {"up" if tot >= 0 else "down"}">{tot:+.2f}%</td>'
             f'<td class="num {"up" if day >= 0 else "down"}">{day:+.2f}%</td></tr>')
     btot = (beq / START_CASH - 1) * 100
-    board.append(f'<tr class="bench"><td class="rk"></td><td><span class="dot dash"></span>지수</td>'
+    board.append(f'<tr class="bench"><td class="rk"></td><td><span class="dot dash"></span>KOSPI200</td>'
                  f'<td class="num">{beq:,.0f}원</td><td class="num {"up" if btot >= 0 else "down"}">{btot:+.2f}%</td>'
                  f'<td></td></tr>')
+    buh = st.get("bench_us", {}).get("history") or []
+    if buh:
+        ueq = buh[-1]["equity"]
+        utot = (ueq / START_CASH - 1) * 100
+        board.append(f'<tr class="bench"><td class="rk"></td><td><span class="dot dot2"></span>S&amp;P500</td>'
+                     f'<td class="num">{ueq:,.0f}원</td><td class="num {"up" if utot >= 0 else "down"}">{utot:+.2f}%</td>'
+                     f'<td></td></tr>')
 
     cards = []
     for pid, eq, tot, _ in rows:
@@ -753,11 +849,12 @@ def render(st, data=None):
         j = p["journal"][-1] if p["journal"] else {}
         hold = []
         for t, sh in sorted(p["positions"].items(), key=lambda kv: -kv[1]):
-            price = _last_close(data, t, date.fromisoformat(st["last_date"])) if data else None
+            price = last_krw(data, t, date.fromisoformat(st["last_date"])) if data else None
             cost = p["cost"].get(t)
             pnl = f' <span class="{"up" if price >= cost else "down"}">{(price / cost - 1) * 100:+.1f}%</span>' \
                 if price and cost else ""
-            hold.append(f"<li>{esc(UNIVERSE.get(t, t))} {sh}주{pnl}</li>")
+            flag = ' <span class="muted">미국</span>' if is_us(t) else ""
+            hold.append(f"<li>{esc(UNIVERSE.get(t, t))}{flag} {sh}주{pnl}</li>")
         cash_pct = p["cash"] / eq * 100 if eq else 0
         hold.append(f'<li class="muted">현금 {cash_pct:.0f}%</li>')
         plan = j.get("targets")
@@ -785,13 +882,15 @@ def render(st, data=None):
         trow_list.append(
             f'<tr><td>{dt[5:]}</td><td>{esc(nm)}</td><td class="{side_cls}">{t["side"]}</td>'
             f'<td>{esc(UNIVERSE.get(t["ticker"], t["ticker"]))}</td><td class="num">{t["shares"]}주</td>'
-            f'<td class="num hide-m">{t["price"]:,.0f}</td><td class="num">{pnl}</td></tr>')
+            f'<td class="num hide-m">{("$" + format(t["price"], ",.2f")) if is_us(t["ticker"]) else format(t["price"], ",.0f")}</td>'
+            f'<td class="num">{pnl}</td></tr>')
     trows = "".join(trow_list) or '<tr><td colspan="7" class="muted">아직 체결된 거래가 없어요.</td></tr>'
 
     u = st["usage"]
     days = len(st["bench"]["history"])
     legend = "".join(f'<span><i style="background:{PLAYERS[pid]["color"]}"></i>{esc(PLAYERS[pid]["name"])}</span>'
-                     for pid in st["players"]) + f'<span><i class="dash"></i>{BENCH_NAME}</span>'
+                     for pid in st["players"]) + f'<span><i class="dash"></i>{BENCH_NAME}</span>' \
+        + (f'<span><i class="dot2"></i>{BENCH_US_NAME}</span>' if st.get("bench_us", {}).get("history") else "")
 
     html = f"""<!DOCTYPE html>
 <html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -811,6 +910,7 @@ td{{padding:10px 6px;border-bottom:1px solid var(--line)}} .num{{text-align:righ
 .rk{{width:24px;font-weight:800;color:var(--muted)}} tr.bench td{{color:var(--sub)}}
 .dot{{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:8px;vertical-align:0}}
 .dot.dash,.legend i.dash{{background:none;border-top:2px dashed var(--bench);border-radius:0;height:0;width:14px;vertical-align:4px}}
+.dot.dot2,.legend i.dot2{{background:none;border-top:2px dotted var(--bench);border-radius:0;height:0;width:14px;vertical-align:4px}}
 .up{{color:var(--up)}} .down{{color:var(--down)}} .muted{{color:var(--muted)}}
 svg{{width:100%;height:auto;display:block}} .grid{{stroke:var(--line)}} .zero{{stroke:var(--muted);stroke-width:1}}
 .ax{{fill:var(--muted);font-size:11px}}
@@ -828,13 +928,14 @@ details{{margin-top:10px;font-size:13px}} summary{{cursor:pointer;color:var(--su
 footer{{margin-top:36px;padding-top:12px;border-top:3px solid var(--ink);font-size:12.5px;color:var(--muted)}}
 </style></head><body><div class="shell">
 <header><h1>AI 투자 리그</h1><span class="date">{d} 마감 기준</span></header>
-<p class="lede">가상 1천만 원으로 {days}거래일째. 실제 돈은 들어가지 않아요.</p>
+<p class="lede">가상 1천만 원으로 한국과 미국 주식을 굴린 지 {days}거래일째. 실제 돈은 들어가지 않아요.</p>
 <h2>순위</h2>
 <table><tr><td></td><td class="muted">선수</td><td class="num muted">총자산</td><td class="num muted">누적</td><td class="num muted">오늘</td></tr>{"".join(board)}</table>
 <h2>수익률 추이</h2>{chart_svg(st)}<div class="legend">{legend}</div>
 <h2>선수별 오늘</h2><div class="cards">{"".join(cards)}</div>
 <h2>최근 거래</h2><table class="trades">{trows}</table>
-<footer>{st["start_date"]} 시작. 주문은 다음 거래일 시가에 체결, 매도 시 약 0.2% 비용 반영.<br>
+<footer>{st["start_date"]} 시작. 한국 종목은 다음 거래일 한국장 시가, 미국 종목은 그날 밤 미국장 시가에 체결. 미국 종목과 S&amp;P500은 원화로 환산.<br>
+한국 매도 시 약 0.2%, 미국 매수와 매도 시 각각 약 0.1% 비용 반영.<br>
 지금 크레딧 구간 사용액 약 ${month_cost(u, date.fromisoformat(st["last_date"])) if st["last_date"] else 0:.2f} / ${month_setting(date.fromisoformat(st["last_date"]), "budget", MONTHLY_BUDGET) if st["last_date"] else MONTHLY_BUDGET:.0f}.
 누적 ${u["cost_usd"]:.2f}, 입력 {u["input_tokens"]:,} 토큰, 출력 {u["output_tokens"]:,} 토큰, 웹 검색 {u["web_searches"]}회.</footer>
 </div></body></html>"""
@@ -855,7 +956,10 @@ def notify_slack(st):
              for i, (pid, p) in enumerate(ranked, 1)]
     b = st["bench"]["history"][-1]["equity"]
     text = (f"AI 투자 리그 {st['last_date']}\n" + "\n".join(parts)
-            + f"\n(지수 {(b / START_CASH - 1) * 100:+.1f}%)")
+            + f"\n(KOSPI200 {(b / START_CASH - 1) * 100:+.1f}%)")
+    if st.get("bench_us", {}).get("history"):
+        u_ = st["bench_us"]["history"][-1]["equity"]
+        text += f" (S&P500 {(u_ / START_CASH - 1) * 100:+.1f}%)"
     top = ranked[0][1]["journal"][-1]["diary"] if ranked[0][1]["journal"] else ""
     if top:
         text += f"\n1위의 한마디: {top}"
