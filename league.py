@@ -40,11 +40,11 @@ KST = ZoneInfo("Asia/Seoul")
 # 설정
 # ---------------------------------------------------------------------------
 MODEL = os.environ.get("LEAGUE_MODEL", "claude-fable-5-1")                    # 매매 판단
-RESEARCH_MODEL = os.environ.get("LEAGUE_RESEARCH_MODEL", "claude-opus-5-5")  # 웹 조사(검색 결과가 길어서 입력 토큰이 큼)
+RESEARCH_MODEL = os.environ.get("LEAGUE_RESEARCH_MODEL", "claude-sonnet-5-5")  # 웹 조사(검색 결과가 길어서 입력 토큰이 큼)
 MARKET_CLOSE_READY = (15, 50)  # 이 시각(KST) 이후에만 그날 시세를 종가로 인정
 FALLBACK_MODEL = "claude-sonnet-5-5"   # 예산이 빠듯하면 이 모델로 내려감
 MONTHLY_BUDGET = float(os.environ.get("LEAGUE_MONTHLY_BUDGET", "100"))  # 달러
-SEARCH_MAX = int(os.environ.get("LEAGUE_SEARCH_MAX", "5"))             # 선수당 하루 웹 검색 수
+SEARCH_MAX = int(os.environ.get("LEAGUE_SEARCH_MAX", "6"))             # 선수당 하루 웹 검색 수
 # 크레딧 구간. 프로모션 크레딧마다 만료일이 달라서, 구간별로 예산과 강도를 정한다.
 # end는 그 크레딧으로 마지막 실행할 날(KST). 구간이 없는 날은 Claude를 부르지 않고 보유만 유지.
 CREDIT_WINDOWS = [
@@ -61,7 +61,11 @@ def window_for(d):
     for w in CREDIT_WINDOWS:
         if w["start"] <= d.isoformat() <= w["end"]:
             return w
-    return None
+    # 정해둔 크레딧 구간 밖: 월 100달러 기본 모드(그달 1일~말일). 크레딧이 없으면 호출이 실패하고 보유만 유지한다.
+    first = d.replace(day=1)
+    last = (first + timedelta(days=32)).replace(day=1) - timedelta(days=1)
+    return {"id": d.strftime("%Y-%m"), "start": first.isoformat(), "end": last.isoformat(),
+            "budget": MONTHLY_BUDGET, "research_model": RESEARCH_MODEL, "search_max": SEARCH_MAX}
 
 
 def month_setting(d, key, default):
