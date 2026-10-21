@@ -158,6 +158,7 @@ PLAYERS = {
             "수혜가 예상되는 종목을 사고 악재가 나온 종목은 판다. 뉴스가 별로 없으면 관망한다."
         ),
         "research": "오늘 한국 증시 마감 시황, 지난밤 미국 증시와 빅테크 뉴스, 종목별 실적 발표, 정책, 수주, 업황 뉴스",
+        "research_model": "claude-opus-5-5",  # 뉴스가 핵심이라 이 선수만 조사를 Opus로(2026-10-21 비교 결과)
     },
     "contrarian": {
         "name": "역발상 최반대",
@@ -725,7 +726,8 @@ def run_day(st, data, d, client=None, dry=False):
         else:
             try:
                 if do_research:
-                    note = research(client, usage, d, month_setting(d, "research_model", RESEARCH_MODEL), pid)
+                    rmodel = PLAYERS[pid].get("research_model") or month_setting(d, "research_model", RESEARCH_MODEL)
+                    note = research(client, usage, d, rmodel, pid)
                 dec = decide_llm(client, usage, d, model, pid, p, table, stats, eq, note)
             except Exception as e:  # 한 선수 오류로 리그 전체가 멈추지 않게
                 print(f"{pid} 오류:", e)
