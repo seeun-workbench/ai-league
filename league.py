@@ -949,12 +949,19 @@ footer{{margin-top:36px;padding-top:12px;border-top:3px solid var(--ink);font-si
 
     def with_archive(page, snapshot_of=None):
         pre = "" if snapshot_of else "days/"
-        links = "".join(f'<a href="{pre}{x}.html"{" class=on" if x == snapshot_of else ""}>{x[5:].replace("-", ".")}</a>'
-                        for x in past)
+        months = {}
+        for x in past:
+            months.setdefault(x[:7], []).append(x)
+        open_month = (snapshot_of or (past[0] if past else ""))[:7]
+        groups = []
+        for m, xs in months.items():
+            links = "".join(f'<a href="{pre}{x}.html"{" class=on" if x == snapshot_of else ""}>{int(x[8:])}일</a>' for x in xs)
+            groups.append(f'<details{" open" if m == open_month else ""}><summary>{int(m[:4])}년 {int(m[5:])}월 '
+                          f'<span class="muted">{len(xs)}일</span></summary><nav class="days">{links}</nav></details>')
         note = (f'<p class="muted" style="margin-bottom:8px">{snapshot_of} 마감 때 저장한 페이지예요. '
                 f'<a href="../index.html">오늘 페이지로</a></p>') if snapshot_of else ""
-        nav = f'<h2>지난 기록</h2>{note}<nav class="days">{links}</nav>'
-        css = ('.days{display:flex;flex-wrap:wrap;gap:6px}.days a{font-size:13px;padding:4px 10px;border:1px solid var(--line);'
+        nav = f'<h2>지난 기록</h2>{note}{"".join(groups)}'
+        css = ('.days{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 4px}.days a{font-size:13px;padding:4px 10px;border:1px solid var(--line);'
                'border-radius:999px;color:var(--sub);text-decoration:none}.days a.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}')
         return page.replace("</style>", css + "</style>", 1).replace("<footer>", nav + "<footer>", 1)
 
