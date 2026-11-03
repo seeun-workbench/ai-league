@@ -42,6 +42,7 @@ KST = ZoneInfo("Asia/Seoul")
 MODEL = os.environ.get("LEAGUE_MODEL", "claude-fable-5-1")                    # 매매 판단
 RESEARCH_MODEL = os.environ.get("LEAGUE_RESEARCH_MODEL", "claude-sonnet-5-5")  # 웹 조사(검색 결과가 길어서 입력 토큰이 큼)
 MARKET_CLOSE_READY = (15, 50)  # 이 시각(KST) 이후에만 그날 시세를 종가로 인정
+CATCH_UP_UNTIL_HOUR = 9           # 자정을 넘긴 늦은 실행도 이 시각(KST) 전이면 전날 거래일을 처리
 FALLBACK_MODEL = "claude-sonnet-5-5"   # 예산이 빠듯하면 이 모델로 내려감
 MONTHLY_BUDGET = float(os.environ.get("LEAGUE_MONTHLY_BUDGET", "100"))  # 달러
 SEARCH_MAX = int(os.environ.get("LEAGUE_SEARCH_MAX", "6"))             # 선수당 하루 웹 검색 수
@@ -1043,9 +1044,14 @@ def main():
         if last == today and (now.hour, now.minute) < MARKET_CLOSE_READY:
             print(f"장이 아직 안 끝났어요({now:%H:%M}). 15:50 이후에 실행돼야 해요.")
             return
-        if last != today:
+        # GitHub 예약 실행이 늦어 자정을 넘겨 돌면 today가 하루 넘어간다.
+        # 다음 장이 열리기 전(09시 전)이면 처리 못 한 전날 거래일을 그대로 처리한다.
+        late = (today - last).days == 1 and now.hour < CATCH_UP_UNTIL_HOUR
+        if last != today and not late:
             print(f"오늘({today})은 휴장일이거나 시세가 아직 없어요. 마지막 거래일 {last}")
             return
+        if late and st["last_date"] != last.isoformat():
+            print(f"늦게 시작한 실행이라 전날 거래일 {last}을 처리해요({now:%m-%d %H:%M}).")
         if st["last_date"] == last.isoformat():
             print("오늘 이미 실행했어요.")
             return
