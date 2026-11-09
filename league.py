@@ -39,7 +39,7 @@ KST = ZoneInfo("Asia/Seoul")
 # ---------------------------------------------------------------------------
 # 설정
 # ---------------------------------------------------------------------------
-MODEL = os.environ.get("LEAGUE_MODEL", "claude-fable-5-1")                    # 매매 판단
+MODEL = os.environ.get("LEAGUE_MODEL", "claude-fable-5-2")                    # 매매 판단
 RESEARCH_MODEL = os.environ.get("LEAGUE_RESEARCH_MODEL", "claude-sonnet-5-5")  # 웹 조사(검색 결과가 길어서 입력 토큰이 큼)
 MARKET_CLOSE_READY = (15, 50)  # 이 시각(KST) 이후에만 그날 시세를 종가로 인정
 FALLBACK_MODEL = "claude-sonnet-5-5"   # 예산이 빠듯하면 이 모델로 내려감
@@ -52,8 +52,10 @@ CREDIT_WINDOWS = [
     {"id": "promo-1018", "start": "2026-10-16", "end": "2026-10-17", "budget": 90.0,
      "research_model": "claude-fable-5-1", "search_max": 10},
     # 11/18(UTC) 만료 크레딧 100달러: 약 22거래일에 나눠 쓰기
-    {"id": "promo-1118", "start": "2026-10-18", "end": "2026-11-17", "budget": 97.0,
-     "research_model": "claude-sonnet-5-5", "search_max": 6},
+    # 11/4~11/9 실행이 밀려서 건너뛰는 바람에 남은 크레딧이 많아, 11/10부터 모델 대결 선수를 추가하고 강도를 올림.
+    # 실제 남은 크레딧(약 50달러)에 맞춰 예산을 85달러로(11/9까지 쓴 35달러 + 50달러).
+    {"id": "promo-1118", "start": "2026-10-18", "end": "2026-11-17", "budget": 85.0,
+     "research_model": "claude-opus-5-5", "search_max": 8},
 ]
 
 
@@ -76,6 +78,7 @@ def month_setting(d, key, default):
 TRADING_DAYS_PER_MONTH = 21
 # 100만 토큰당 달러 (입력, 출력). 바뀌면 여기만 고치면 됨
 PRICES = {
+    "claude-fable-5-2": (8.0, 40.0),
     "claude-fable-5-1": (10.0, 50.0),
     "claude-opus-5-5": (4.0, 20.0),
     "claude-sonnet-5-5": (2.0, 10.0),
@@ -241,6 +244,24 @@ PLAYERS = {
         ),
         "research": "대형주들의 기술적 신호(골든크로스, 신고가 돌파, RSI 과매수와 과매도, 거래량 급증) 관련 오늘 시황 기사",
     },
+    # 모델 대결: 성격은 똑같이 두고 모델만 다르게. 조사와 판단 모두 자기 모델로 한다(예산 조정으로 모델을 바꾸지 않음).
+    **{pid: {
+        "name": f"{label} (모델 대결)",
+        "short": label,
+        "kind": "llm",
+        "model": model,
+        "color": color,
+        "persona": (
+            "당신은 정해진 스타일이 없는 자유 투자자다. 가치, 추세, 뉴스, 수급, 거시 중 무엇이든 "
+            "지금 가장 이길 수 있다고 판단하는 방법을 스스로 고른다. 다른 참가자들은 같은 조건의 다른 AI 모델이다. 1~8종목."
+        ),
+        "research": "오늘 한국과 미국 증시 전반, 내일 수익률에 가장 중요한 뉴스와 수급, 거래 가능 종목 중 기회와 위험",
+    } for pid, label, model, color in [
+        ("m_fable", "Fable 5.2", "claude-fable-5-2", "#D97757"),
+        ("m_opus", "Opus 5.5", "claude-opus-5-5", "#3B6FB6"),
+        ("m_sonnet", "Sonnet 5.5", "claude-sonnet-5-5", "#4E9A6A"),
+        ("m_haiku", "Haiku 5.5", "claude-haiku-5-5", "#B58AD6"),
+    ]},
     "monkey": {
         "name": "원숭이 랜덤",
         "short": "원숭이",
@@ -719,6 +740,9 @@ def run_day(st, data, d, client=None, dry=False):
         kind = PLAYERS[pid]["kind"]
         eq = p["history"][-1]["equity"]
         model, do_research = (None, False) if dry else pick_model(usage, d)
+        fixed = PLAYERS[pid].get("model")
+        if fixed and model is not None:          # 모델 대결 선수: 예산이 남아 있으면 항상 자기 모델로 조사와 판단
+            model, do_research = fixed, True
         note = None
         if kind == "random":
             dec = decide_monkey(p, d)
@@ -730,7 +754,7 @@ def run_day(st, data, d, client=None, dry=False):
         else:
             try:
                 if do_research:
-                    rmodel = PLAYERS[pid].get("research_model") or month_setting(d, "research_model", RESEARCH_MODEL)
+                    rmodel = fixed or PLAYERS[pid].get("research_model") or month_setting(d, "research_model", RESEARCH_MODEL)
                     note = research(client, usage, d, rmodel, pid)
                 dec = decide_llm(client, usage, d, model, pid, p, table, stats, eq, note)
             except Exception as e:  # 한 선수 오류로 리그 전체가 멈추지 않게
@@ -850,6 +874,22 @@ def render(st, data=None):
                      f'<td class="num">{ueq:,.0f}원</td><td class="num {"up" if utot >= 0 else "down"}">{utot:+.2f}%</td>'
                      f'<td></td></tr>')
 
+    battle = []
+    mrows = [r for r in rows if PLAYERS[r[0]].get("model")]
+    for rank, (pid, eq, tot, day) in enumerate(mrows, 1):
+        pl = PLAYERS[pid]
+        since = st["players"][pid]["history"][0]["date"][5:] if st["players"][pid]["history"] else "-"
+        battle.append(
+            f'<tr><td class="rk">{rank}</td><td><span class="dot" style="background:{pl["color"]}"></span>{esc(pl["short"])}</td>'
+            f'<td class="num muted">{since}부터</td>'
+            f'<td class="num {"up" if tot >= 0 else "down"}">{tot:+.2f}%</td>'
+            f'<td class="num {"up" if day >= 0 else "down"}">{day:+.2f}%</td></tr>')
+    battle_html = (
+        '<h2>모델 대결</h2><p class="muted" style="font-size:13.5px;margin-bottom:6px">'
+        '같은 성격, 같은 정보 조건에서 모델만 다르게 했어요. 조사와 판단 모두 자기 모델로 해요.</p>'
+        f'<table><tr><td></td><td class="muted">모델</td><td class="num muted">참가</td><td class="num muted">누적</td>'
+        f'<td class="num muted">오늘</td></tr>{"".join(battle)}</table>') if battle else ""
+
     cards = []
     for pid, eq, tot, _ in rows:
         p, pl = st["players"][pid], PLAYERS[pid]
@@ -938,6 +978,7 @@ footer{{margin-top:36px;padding-top:12px;border-top:3px solid var(--ink);font-si
 <p class="lede">가상 1천만 원으로 한국과 미국 주식을 굴린 지 {days}거래일째. 실제 돈은 들어가지 않아요.</p>
 <h2>순위</h2>
 <table><tr><td></td><td class="muted">선수</td><td class="num muted">총자산</td><td class="num muted">누적</td><td class="num muted">오늘</td></tr>{"".join(board)}</table>
+{battle_html}
 <h2>수익률 추이</h2>{chart_svg(st)}<div class="legend">{legend}</div>
 <h2>선수별 오늘</h2><div class="cards">{"".join(cards)}</div>
 <h2>최근 거래</h2><table class="trades">{trows}</table>
@@ -1043,7 +1084,10 @@ def main():
         if last == today and (now.hour, now.minute) < MARKET_CLOSE_READY:
             print(f"장이 아직 안 끝났어요({now:%H:%M}). 15:50 이후에 실행돼야 해요.")
             return
-        if last != today:
+        # GitHub 예약 실행이 몇 시간씩 밀려 자정을 넘기는 일이 잦다. 다음 날 한국장 시작(09:00) 전이면
+        # 직전 거래일 몫으로 실행한다. 이미 했으면 아래 중복 방지에서 걸러진다.
+        late = last < today and now.hour < 9 and (today - last).days <= 3
+        if last != today and not late:
             print(f"오늘({today})은 휴장일이거나 시세가 아직 없어요. 마지막 거래일 {last}")
             return
         if st["last_date"] == last.isoformat():

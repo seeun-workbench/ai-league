@@ -2,7 +2,8 @@ name: AI 투자 리그
 
 on:
   schedule:
-    - cron: "40 7 * * 1-5"   # 평일 16:40 KST (GitHub 사정으로 몇 분~수십 분 늦게 돌 수 있음)
+    - cron: "40 7 * * 1-5"   # 평일 16:40 KST (GitHub 사정으로 몇 시간씩 늦게 돌 수 있음)
+    - cron: "10 22 * * 1-5"  # 예비: 다음 날 07:10 KST. 위 실행이 이미 했으면 그냥 끝남
   workflow_dispatch: {}      # Actions 탭에서 수동 실행 버튼
 
 permissions:
