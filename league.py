@@ -642,7 +642,7 @@ def tidy_note(note):
 NOTE_FORMAT = ("형식은 꼭 이렇게 맞춰. 제목이나 머리말 없이 바로 번호 목록으로 시작한다. "
                "각 항목은 '1. [확인] 주제: 내용' 꼴이고, 꼬리표는 [확인]과 [추측] 두 가지만 항목 맨 앞에 쓴다. "
                "주제에는 종목명이나 '코스피 수급', '미국 증시'처럼 짧은 이름을 쓴다. 한 항목은 세 문장 이내로 하고 중요한 것부터 적는다. "
-               "문장은 '~했다', '~이다'로 끝낸다. 굵은 글씨, 표, 이모지, 다른 모양의 꼬리표나 괄호, 맺음말은 쓰지 않는다. ")
+               "문장은 '~했다', '~이다'로 끝낸다. 굵은 글씨, 표, 이모지, 다른 모양의 꼬리표, 맺음말은 쓰지 않는다. ")
 
 
 def research(client, usage, d, model, pid):
@@ -1172,7 +1172,7 @@ def notify_slack(st):
     parts = [f"{i}위 {PLAYERS[pid]['name']} {(p['history'][-1]['equity'] / START_CASH - 1) * 100:+.1f}%"
              for i, (pid, p) in enumerate(ranked, 1)]
     b = st["bench"]["history"][-1]["equity"]
-    text = (f"AI 투자 리그 {st['last_date']}\n" + "\n".join(parts)
+    text = (f"AI 투자 리그 {kday(st['last_date'], True)}\n" + "\n".join(parts)
             + f"\n(KOSPI200 {(b / START_CASH - 1) * 100:+.1f}%)")
     if st.get("bench_us", {}).get("history"):
         u_ = st["bench_us"]["history"][-1]["equity"]
