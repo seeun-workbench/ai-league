@@ -282,14 +282,37 @@ def fetch_prices() -> dict[str, pd.DataFrame]:
     raw = yf.download(tickers, period="6mo", interval="1d", group_by="ticker",
                       auto_adjust=False, progress=False, threads=True)
     out = {}
-    for t in tickers:
+
+    def take(t, frame):
         try:
-            df = raw[t][["Open", "Close"]].dropna()
+            df = frame[["Open", "Close"]].dropna()
         except KeyError:
-            continue
+            return
         df.index = pd.to_datetime(df.index).date
         if len(df):
             out[t] = df
+
+    for t in tickers:
+        try:
+            take(t, raw[t])
+        except KeyError:
+            continue
+    # 한꺼번에 받다가 yfinance 내부 캐시가 겹쳐 쓰여(database is locked) 일부 종목이 빠지는 날이 있다.
+    # 빠진 종목만 하나씩 다시 받는다.
+    import time
+    for attempt in range(2):
+        missing = [t for t in tickers if t not in out]
+        if not missing:
+            break
+        print("시세 다시 받기:", ", ".join(missing))
+        time.sleep(3)
+        for t in missing:
+            try:
+                one = yf.download(t, period="6mo", interval="1d", auto_adjust=False, progress=False,
+                                  threads=False, multi_level_index=False)
+                take(t, one)
+            except Exception as e:
+                print(f"{t} 다시 받기 실패: {e}")
     return out
 
 
@@ -813,6 +836,7 @@ def md(s):
         if m:
             line = f"<b>{m.group(1)}</b>"
         line = re.sub(r"^(\s*)[-*]\s+", r"\1• ", line)
+        line = re.sub(r"^(\s*• )([^:<]{1,24}):(?=\s)", r"\1<b>\2</b>:", line)   # '• 종목명: 내용'의 종목명
         out.append(line)
     return "\n".join(out)
 
@@ -937,8 +961,23 @@ def chart_svg(st):
     return "".join(out)
 
 
+def month_ret(history, d):
+    """d가 속한 달의 수익률(%). 기준은 전달 마지막 거래일 평가액, 그 달에 시작했으면 시작 금액."""
+    if not history:
+        return 0.0
+    before = [e["equity"] for e in history if e["date"] < d[:7] + "-01"]
+    base = before[-1] if before else START_CASH
+    now = [e["equity"] for e in history if e["date"] <= d]
+    return ((now[-1] if now else base) / base - 1) * 100
+
+
+def pct_td(v, digits=2, cls=""):
+    return f'<td class="num {"up" if v >= 0 else "down"}{cls}">{v:+.{digits}f}%</td>'
+
+
 def render(st, data=None):
     d = st["last_date"] or "-"
+    mon = f"{int(d[5:7])}월" if d != "-" else "이번 달"
     rows = []
     for pid, p in st["players"].items():
         h = p["history"]
@@ -954,20 +993,21 @@ def render(st, data=None):
         pl = PLAYERS[pid]
         board.append(
             f'<tr><td class="rk">{rank}</td><td><span class="dot" style="background:{pl["color"]}"></span>'
-            f'<span class="full">{esc(pl["name"])}</span><span class="short">{esc(pl["short"])}</span></td><td class="num">{eq:,.0f}원</td>'
+            f'<span class="full">{esc(pl["name"])}</span><span class="short">{esc(pl["short"])}</span></td><td class="num hide-m">{eq:,.0f}원</td>'
             f'<td class="num {"up" if tot >= 0 else "down"}">{tot:+.2f}%</td>'
+            + pct_td(month_ret(st["players"][pid]["history"], d)) +
             f'<td class="num {"up" if day >= 0 else "down"}">{day:+.2f}%</td></tr>')
     btot = (beq / START_CASH - 1) * 100
     board.append(f'<tr class="bench"><td class="rk"></td><td><span class="dot dash"></span>KOSPI200</td>'
-                 f'<td class="num">{beq:,.0f}원</td><td class="num {"up" if btot >= 0 else "down"}">{btot:+.2f}%</td>'
-                 f'<td></td></tr>')
+                 f'<td class="num hide-m">{beq:,.0f}원</td><td class="num {"up" if btot >= 0 else "down"}">{btot:+.2f}%</td>'
+                 + pct_td(month_ret(bh, d)) + '<td></td></tr>')
     buh = st.get("bench_us", {}).get("history") or []
     if buh:
         ueq = buh[-1]["equity"]
         utot = (ueq / START_CASH - 1) * 100
         board.append(f'<tr class="bench"><td class="rk"></td><td><span class="dot dot2"></span>S&amp;P500</td>'
-                     f'<td class="num">{ueq:,.0f}원</td><td class="num {"up" if utot >= 0 else "down"}">{utot:+.2f}%</td>'
-                     f'<td></td></tr>')
+                     f'<td class="num hide-m">{ueq:,.0f}원</td><td class="num {"up" if utot >= 0 else "down"}">{utot:+.2f}%</td>'
+                     + pct_td(month_ret(buh, d)) + '<td></td></tr>')
 
     battle = []
     mrows = [r for r in rows if PLAYERS[r[0]].get("model")]
@@ -976,13 +1016,14 @@ def render(st, data=None):
         since = kday(st["players"][pid]["history"][0]["date"]) if st["players"][pid]["history"] else "-"
         battle.append(
             f'<tr><td class="rk">{rank}</td><td><span class="dot" style="background:{pl["color"]}"></span>{esc(pl["short"])}</td>'
-            f'<td class="num muted">{since}부터</td>'
+            f'<td class="num muted hide-m">{since}부터</td>'
             f'<td class="num {"up" if tot >= 0 else "down"}">{tot:+.2f}%</td>'
+            + pct_td(month_ret(st["players"][pid]["history"], d)) +
             f'<td class="num {"up" if day >= 0 else "down"}">{day:+.2f}%</td></tr>')
     battle_html = (
         '<h2>모델 대결</h2><p class="muted" style="font-size:13.5px;margin-bottom:6px">'
         '성격과 정보는 같고 모델만 달라요. 조사와 판단 모두 각자 모델로 해요.</p>'
-        f'<table><tr><td></td><td class="muted">모델</td><td class="num muted">참가</td><td class="num muted">누적</td>'
+        f'<table><tr><td></td><td class="muted">모델</td><td class="num muted hide-m">참가</td><td class="num muted">누적</td><td class="num muted">{mon}</td>'
         f'<td class="num muted">오늘</td></tr>{"".join(battle)}</table>') if battle else ""
 
     cards = []
@@ -1075,7 +1116,7 @@ footer{{margin-top:36px;padding-top:12px;border-top:3px solid var(--ink);font-si
 <header><h1>AI 투자 리그</h1><span class="date">{kday(d, True)} 마감 기준</span></header>{NAV_MARK}
 <p class="lede">가상 1천만 원으로 한국과 미국 주식을 굴린 지 {days}거래일째.</p>
 <h2>순위</h2>
-<table><tr><td></td><td class="muted">선수</td><td class="num muted">총자산</td><td class="num muted">누적</td><td class="num muted">오늘</td></tr>{"".join(board)}</table>
+<table><tr><td></td><td class="muted">선수</td><td class="num muted hide-m">총자산</td><td class="num muted">누적</td><td class="num muted">{mon}</td><td class="num muted">오늘</td></tr>{"".join(board)}</table>
 {battle_html}
 <h2>수익률 추이</h2>{chart_svg(st)}<div class="legend">{legend}</div>
 <h2>선수별 오늘</h2><div class="cards">{"".join(cards)}</div>
