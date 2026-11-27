@@ -626,6 +626,18 @@ def call_claude(client, usage, d, model, **kw):
 
 EMOJI = re.compile("[\U0001F000-\U0001FAFF\u2600-\u27BF\uFE0F\u200D]\\s?")   # 지시를 어기고 넣은 이모지는 저장할 때 뺀다
 
+_TAG_WORDS = {"확인": "확인|사실|확인된 사실|팩트", "추측": "추측|전망|해석|추정|예상"}
+_TAG_ANY = "확인|사실|확인된 사실|팩트|추측|전망|해석|추정|예상"
+
+
+def tidy_note(note):
+    """모델이 지시와 다르게 쓴 꼬리표(【확인】, (사실), [추측, 전망] 등)를 [확인], [추측]으로 맞추고 이모지를 뺀다."""
+    note = EMOJI.sub("", note.replace("·", ", "))
+    for tag, words in _TAG_WORDS.items():
+        note = re.sub(rf"[【\[(（<]\s*(?:{words})(?:\s*[,/]\s*(?:{_TAG_ANY}))*\s*[】\])）>]", f"[{tag}]", note)
+    return re.sub(r"^(\s*\d+\.\s*)\*\*(\[(?:확인|추측)\])\s*", r"\1\2 **", note, flags=re.M)
+
+
 # 조사 노트 형식. 선수와 모델이 달라도 같은 모양으로 읽히게 한다.
 NOTE_FORMAT = ("형식은 꼭 이렇게 맞춰. 제목이나 머리말 없이 바로 번호 목록으로 시작한다. "
                "각 항목은 '1. [확인] 주제: 내용' 꼴이고, 꼬리표는 [확인]과 [추측] 두 가지만 항목 맨 앞에 쓴다. "
@@ -813,7 +825,7 @@ def run_day(st, data, d, client=None, dry=False):
         p["pending"] = targets
         p["journal"].append({"date": d.isoformat(), "diary": dec.get("diary", "").replace("·", ", "),
                              "reason": dec.get("reason", "").replace("·", ", "), "targets": targets,
-                             "model": model, "research": EMOJI.sub("", note.replace("·", ", ")) if note else note})
+                             "model": model, "research": tidy_note(note) if note else note})
         if JOURNAL_KEEP:
             p["journal"] = p["journal"][-JOURNAL_KEEP:]
     usage.setdefault(days_key, [])
