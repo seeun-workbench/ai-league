@@ -511,8 +511,8 @@ SUBMIT_TOOL = {
                                          "weight": {"type": "number"}},
                           "required": ["ticker", "weight"]},
             },
-            "reason": {"type": "string", "description": "판단 근거 2~3문장"},
-            "diary": {"type": "string", "description": "오늘의 한 줄 일기, 캐릭터 말투로"},
+            "reason": {"type": "string", "description": "판단 근거 2~3문장. '~했다', '~이다'로 끝나는 평서문, 목록이나 굵은 글씨 없이"},
+            "diary": {"type": "string", "description": "오늘의 일기. 캐릭터 말투로 한두 문장, 100자 이내"},
         },
         "required": ["keep_current", "targets", "reason", "diary"],
     },
@@ -601,6 +601,12 @@ def call_claude(client, usage, d, model, **kw):
     return resp
 
 
+# 조사 노트 형식. 선수와 모델이 달라도 같은 모양으로 읽히게 한다.
+NOTE_FORMAT = ("형식은 꼭 이렇게 맞춰. 첫 줄에 '확인'이라고만 쓰고 그 아래에 확인한 사실을, 이어서 '추측'이라고만 쓴 줄 아래에 추측을 적는다. "
+               "각 항목은 '- 종목명: 내용' 한 줄이고, 특정 종목 얘기가 아니면 '- 시장: 내용'으로 쓴다. "
+               "문장은 '~했다', '~이다'로 끝낸다. 번호, 제목, 표, 굵은 글씨, 괄호 꼬리표, 머리말과 맺음말은 쓰지 않는다. ")
+
+
 def research(client, usage, d, model, pid):
     names = ", ".join(UNIVERSE.values())
     focus = PLAYERS[pid].get("research", "오늘 한국 증시 주요 뉴스")
@@ -608,6 +614,7 @@ def research(client, usage, d, model, pid):
              f"{d.isoformat()} 기준으로 웹에서 다음을 조사해서 15줄 이내로 정리해줘: {focus}. "
              "한국과 미국 시장을 모두 본다. "
              f"관련 종목명을 꼭 붙이고, 확인한 사실과 추측을 구분해. 거래 가능 종목: {names}. "
+             + NOTE_FORMAT +
              "이 단계는 조사만 한다. 매수, 매도, 유지 같은 결정이나 비중 제안은 쓰지 말고, "
              "변수 이름이나 코드 같은 프로그램 용어도 쓰지 마."}]
     tools = [{"type": "web_search_20250305", "name": "web_search", "max_uses": month_setting(d, "search_max", SEARCH_MAX),
@@ -638,7 +645,7 @@ def research(client, usage, d, model, pid):
                 again = call_claude(client, usage, d, model, max_tokens=3000, system=PLAYERS[pid]["persona"], tools=tools,
                                     messages=msgs + [{"role": "assistant", "content": keep},
                                                      {"role": "user", "content": "길이 제한에 걸렸어. 새로 검색하지 말고 "
-                                                      "지금까지 찾은 내용만 12줄 이내로 처음부터 다시 정리해줘."}])
+                                                      "지금까지 찾은 내용만 같은 형식으로 12줄 이내로 처음부터 다시 정리해줘."}])
                 redo = "".join(b.text for b in again.content if b.type == "text").strip()
                 if redo and again.stop_reason == "end_turn":
                     return redo
@@ -800,6 +807,8 @@ def md(s):
         line = re.sub(r"\*\*(.+?)\*\*", r"<b>\1</b>", line)
         line = re.sub(r"(?<![*\w])\*(?!\s)(.+?)(?<!\s)\*(?![*\w])", r"<i>\1</i>", line)
         line = re.sub(r"`([^`]+)`", r"<code>\1</code>", line)
+        if line.strip() in ("확인", "추측"):   # 조사 노트의 두 묶음 제목
+            line = f"<b>{line.strip()}</b>"
         m = re.match(r"^\s*#{1,6}\s+(.*)$", line)
         if m:
             line = f"<b>{m.group(1)}</b>"
