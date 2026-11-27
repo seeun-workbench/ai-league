@@ -624,10 +624,12 @@ def call_claude(client, usage, d, model, **kw):
     return resp
 
 
+EMOJI = re.compile("[\U0001F000-\U0001FAFF\u2600-\u27BF\uFE0F\u200D]\\s?")   # 지시를 어기고 넣은 이모지는 저장할 때 뺀다
+
 # 조사 노트 형식. 선수와 모델이 달라도 같은 모양으로 읽히게 한다.
 NOTE_FORMAT = ("형식은 꼭 이렇게 맞춰. 첫 줄에 '확인'이라고만 쓰고 그 아래에 확인한 사실을, 이어서 '추측'이라고만 쓴 줄 아래에 추측을 적는다. "
                "각 항목은 '- 종목명: 내용' 한 줄이고, 특정 종목 얘기가 아니면 '- 시장: 내용'으로 쓴다. "
-               "문장은 '~했다', '~이다'로 끝낸다. 번호, 제목, 표, 굵은 글씨, 괄호 꼬리표, 머리말과 맺음말은 쓰지 않는다. ")
+               "문장은 '~했다', '~이다'로 끝낸다. 번호, 제목, 표, 굵은 글씨, 이모지, 꺾쇠나 대괄호 꼬리표(【확인】, [추측] 같은 것), 머리말과 맺음말은 쓰지 않는다. ")
 
 
 def research(client, usage, d, model, pid):
@@ -810,7 +812,7 @@ def run_day(st, data, d, client=None, dry=False):
         p["pending"] = targets
         p["journal"].append({"date": d.isoformat(), "diary": dec.get("diary", "").replace("·", ", "),
                              "reason": dec.get("reason", "").replace("·", ", "), "targets": targets,
-                             "model": model, "research": note.replace("·", ", ") if note else note})
+                             "model": model, "research": EMOJI.sub("", note.replace("·", ", ")) if note else note})
         if JOURNAL_KEEP:
             p["journal"] = p["journal"][-JOURNAL_KEEP:]
     usage.setdefault(days_key, [])
