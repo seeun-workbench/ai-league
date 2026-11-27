@@ -1222,6 +1222,11 @@ def main():
     data = fetch_prices()
     if BENCH not in data:
         sys.exit("시세를 받지 못했어요.")
+    # 한 종목이라도 빠지면 그 종목을 가진 선수 자산이 0원으로 계산된다(11/13에 삼성전자로 실제로 생김).
+    # 틀린 기록을 남기느니 오늘 실행을 멈추고, 다시 실행하게 한다.
+    missing = [t for t in list(UNIVERSE) + [BENCH, BENCH_US, FX] if t not in data]
+    if missing:
+        sys.exit("시세를 받지 못한 종목이 있어 멈춰요: " + ", ".join(UNIVERSE.get(t, t) for t in missing))
     last = max(data[BENCH].index)
     st = load_state(last)
     now = datetime.now(KST)
