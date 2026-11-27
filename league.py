@@ -624,7 +624,7 @@ def call_claude(client, usage, d, model, **kw):
     return resp
 
 
-EMOJI = re.compile("[\U0001F000-\U0001FAFF\u2600-\u27BF\uFE0F\u200D]\\s?")   # 지시를 어기고 넣은 이모지는 저장할 때 뺀다
+EMOJI = re.compile("[\U0001F000-\U0001FAFF\u2600-\u27BF\uFE0F\u200D][ \\t]?")   # 지시를 어기고 넣은 이모지는 저장할 때 뺀다
 
 _TAG_WORDS = {"확인": "확인|사실|확인된 사실|팩트", "추측": "추측|전망|해석|추정|예상"}
 _TAG_ANY = "확인|사실|확인된 사실|팩트|추측|전망|해석|추정|예상"
