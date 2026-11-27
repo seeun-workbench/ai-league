@@ -845,7 +845,7 @@ def md(s):
         line = re.sub(r"\*\*(.+?)\*\*", r"<b>\1</b>", line)
         line = re.sub(r"(?<![*\w])\*(?!\s)(.+?)(?<!\s)\*(?![*\w])", r"<i>\1</i>", line)
         line = re.sub(r"`([^`]+)`", r"<code>\1</code>", line)
-        line = re.sub(r"^(\s*\d+\.\s*)\[(확인|추측)\]", r'\1<b class="tag">\2</b>', line)   # 조사 노트 꼬리표
+        line = re.sub(r"^(\s*\d+\.\s*)\[(확인|추측)\]", r'\1<b class="tag">【\2】</b>', line)   # 조사 노트 꼬리표
         m = re.match(r"^\s*#{1,6}\s+(.*)$", line)
         if m:
             line = f"<b>{m.group(1)}</b>"
