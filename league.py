@@ -535,7 +535,7 @@ SUBMIT_TOOL = {
                           "required": ["ticker", "weight"]},
             },
             "reason": {"type": "string", "description": "판단 근거 2~3문장. '~했다', '~이다'로 끝나는 평서문, 목록이나 굵은 글씨 없이"},
-            "diary": {"type": "string", "description": "오늘의 일기. 캐릭터 말투로 한두 문장, 100자 이내"},
+            "diary": {"type": "string", "description": "오늘의 한 줄 일기, 캐릭터 말투로"},
         },
         "required": ["keep_current", "targets", "reason", "diary"],
     },
@@ -627,9 +627,10 @@ def call_claude(client, usage, d, model, **kw):
 EMOJI = re.compile("[\U0001F000-\U0001FAFF\u2600-\u27BF\uFE0F\u200D]\\s?")   # 지시를 어기고 넣은 이모지는 저장할 때 뺀다
 
 # 조사 노트 형식. 선수와 모델이 달라도 같은 모양으로 읽히게 한다.
-NOTE_FORMAT = ("형식은 꼭 이렇게 맞춰. 첫 줄에 '확인'이라고만 쓰고 그 아래에 확인한 사실을, 이어서 '추측'이라고만 쓴 줄 아래에 추측을 적는다. "
-               "각 항목은 '- 종목명: 내용' 한 줄이고, 특정 종목 얘기가 아니면 '- 시장: 내용'으로 쓴다. "
-               "문장은 '~했다', '~이다'로 끝낸다. 번호, 제목, 표, 굵은 글씨, 이모지, 꺾쇠나 대괄호 꼬리표(【확인】, [추측] 같은 것), 머리말과 맺음말은 쓰지 않는다. ")
+NOTE_FORMAT = ("형식은 꼭 이렇게 맞춰. 제목이나 머리말 없이 바로 번호 목록으로 시작한다. "
+               "각 항목은 '1. [확인] 주제: 내용' 꼴이고, 꼬리표는 [확인]과 [추측] 두 가지만 항목 맨 앞에 쓴다. "
+               "주제에는 종목명이나 '코스피 수급', '미국 증시'처럼 짧은 이름을 쓴다. 한 항목은 세 문장 이내로 하고 중요한 것부터 적는다. "
+               "문장은 '~했다', '~이다'로 끝낸다. 굵은 글씨, 표, 이모지, 다른 모양의 꼬리표나 괄호, 맺음말은 쓰지 않는다. ")
 
 
 def research(client, usage, d, model, pid):
@@ -832,8 +833,7 @@ def md(s):
         line = re.sub(r"\*\*(.+?)\*\*", r"<b>\1</b>", line)
         line = re.sub(r"(?<![*\w])\*(?!\s)(.+?)(?<!\s)\*(?![*\w])", r"<i>\1</i>", line)
         line = re.sub(r"`([^`]+)`", r"<code>\1</code>", line)
-        if line.strip() in ("확인", "추측"):   # 조사 노트의 두 묶음 제목
-            line = f"<b>{line.strip()}</b>"
+        line = re.sub(r"^(\s*\d+\.\s*)\[(확인|추측)\]", r'\1<b class="tag">\2</b>', line)   # 조사 노트 꼬리표
         m = re.match(r"^\s*#{1,6}\s+(.*)$", line)
         if m:
             line = f"<b>{m.group(1)}</b>"
@@ -1109,7 +1109,7 @@ svg{{width:100%;height:auto;display:block}} .grid{{stroke:var(--line)}} .zero{{s
 .reason{{margin-top:6px;font-size:13px;color:var(--sub)}} .k{{margin-top:12px;font-size:12px;font-weight:700;color:var(--muted)}}
 .card ul{{list-style:none;font-size:13.5px;margin-top:2px}} .plan{{font-size:13.5px}}
 details{{margin-top:10px;font-size:13px}} summary{{cursor:pointer;color:var(--sub);font-weight:700}}
-.note{{white-space:pre-wrap;margin-top:6px;color:var(--sub);font-size:12.5px}} .note b{{color:var(--ink)}} code{{font-size:.95em;background:var(--line);padding:0 3px;border-radius:3px}}
+.note{{white-space:pre-wrap;margin-top:6px;color:var(--sub);font-size:12.5px}} .note b{{color:var(--ink)}} .note b.tag{{font-size:.9em;margin-right:2px;color:var(--sub)}} code{{font-size:.95em;background:var(--line);padding:0 3px;border-radius:3px}}
 .trades td{{font-size:13px;padding:7px 4px;white-space:nowrap}} .short{{display:none}}
 @media (max-width:520px){{.full{{display:none}} .short{{display:inline}} .hide-m{{display:none}} h1{{font-size:20px}}}}
 {NAV_CSS}
