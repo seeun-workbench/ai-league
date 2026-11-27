@@ -23,5 +23,5 @@ sel.onchange=function(){location.href=url(sel.value);};
 el.textContent='';
 el.appendChild(step(older,'이전 기록','‹ -'));el.appendChild(sel);el.appendChild(step(newer,'다음 기록','- ›'));
 if(cur!==latest){var n=document.createElement('p');n.className='daynote';
-  n.innerHTML='이날 마감 때 저장한 기록이에요. <a href="'+home+'">최신 기록 보기</a>';el.after(n);}
+  n.innerHTML='<a href="'+home+'">최신 기록 보기</a>';el.after(n);}
 })();

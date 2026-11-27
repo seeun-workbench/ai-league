@@ -629,6 +629,21 @@ def research(client, usage, d, model, pid):
         msgs = msgs + [{"role": "assistant", "content": resp.content}]
     text = "".join(parts).strip()
     if resp.stop_reason == "max_tokens":
+        # 길이 제한에 걸리면 노트가 중간에 끊기거나 통째로 비어요. 지금까지 찾은 것만으로 한 번 더 짧게 정리시켜요.
+        try:
+            keep = [b for b in resp.content if b.type != "text"]
+            while keep and keep[-1].type == "server_tool_use":   # 결과 없이 끊긴 검색 요청은 뺀다
+                keep.pop()
+            if keep:
+                again = call_claude(client, usage, d, model, max_tokens=3000, system=PLAYERS[pid]["persona"], tools=tools,
+                                    messages=msgs + [{"role": "assistant", "content": keep},
+                                                     {"role": "user", "content": "길이 제한에 걸렸어. 새로 검색하지 말고 "
+                                                      "지금까지 찾은 내용만 12줄 이내로 처음부터 다시 정리해줘."}])
+                redo = "".join(b.text for b in again.content if b.type == "text").strip()
+                if redo and again.stop_reason == "end_turn":
+                    return redo
+        except Exception as e:  # 다시 정리가 안 되면 끊긴 노트를 그대로 쓴다
+            print("조사 노트 다시 정리 실패:", e)
         text += "\n(길이 제한으로 여기까지)"
     return text or "조사 결과 없음"
 
@@ -842,7 +857,7 @@ sel.onchange=function(){location.href=url(sel.value);};
 el.textContent='';
 el.appendChild(step(older,'이전 기록','\u2039 -'));el.appendChild(sel);el.appendChild(step(newer,'다음 기록','- \u203A'));
 if(cur!==latest){var n=document.createElement('p');n.className='daynote';
-  n.innerHTML='이날 마감 때 저장한 기록이에요. <a href="'+home+'">최신 기록 보기</a>';el.after(n);}
+  n.innerHTML='<a href="'+home+'">최신 기록 보기</a>';el.after(n);}
 })();
 """
 
@@ -957,7 +972,7 @@ def render(st, data=None):
             f'<td class="num {"up" if day >= 0 else "down"}">{day:+.2f}%</td></tr>')
     battle_html = (
         '<h2>모델 대결</h2><p class="muted" style="font-size:13.5px;margin-bottom:6px">'
-        '같은 성격, 같은 정보 조건에서 모델만 다르게 했어요. 조사와 판단 모두 자기 모델로 해요.</p>'
+        '성격과 정보는 같고 모델만 달라요. 조사와 판단 모두 각자 모델로 해요.</p>'
         f'<table><tr><td></td><td class="muted">모델</td><td class="num muted">참가</td><td class="num muted">누적</td>'
         f'<td class="num muted">오늘</td></tr>{"".join(battle)}</table>') if battle else ""
 
@@ -1049,7 +1064,7 @@ details{{margin-top:10px;font-size:13px}} summary{{cursor:pointer;color:var(--su
 footer{{margin-top:36px;padding-top:12px;border-top:3px solid var(--ink);font-size:12.5px;color:var(--muted)}}
 </style></head><body><div class="shell">
 <header><h1>AI 투자 리그</h1><span class="date">{kday(d, True)} 마감 기준</span></header>{NAV_MARK}
-<p class="lede">가상 1천만 원으로 한국과 미국 주식을 굴린 지 {days}거래일째. 실제 돈은 들어가지 않아요.</p>
+<p class="lede">가상 1천만 원으로 한국과 미국 주식을 굴린 지 {days}거래일째.</p>
 <h2>순위</h2>
 <table><tr><td></td><td class="muted">선수</td><td class="num muted">총자산</td><td class="num muted">누적</td><td class="num muted">오늘</td></tr>{"".join(board)}</table>
 {battle_html}
