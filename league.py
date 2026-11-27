@@ -797,6 +797,77 @@ def esc(s):
     return (str(s).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;"))
 
 
+WEEKDAYS = "월화수목금토일"
+
+
+def kday(iso, long=False):
+    """날짜 표기는 여기 한 곳에서만 정해요. 짧게는 11/27, 길게는 2026년 11월 27일 (금)."""
+    try:
+        x = date.fromisoformat(iso)
+    except (TypeError, ValueError):
+        return iso or "-"
+    return f"{x.year}년 {x.month}월 {x.day}일 ({WEEKDAYS[x.weekday()]})" if long else f"{x.month}/{x.day}"
+
+
+NAV_MARK = "<!--daynav-->"
+NAV_CSS = (".daynav{display:flex;align-items:center;gap:8px;padding:12px 0 0;font-size:14px}"
+           ".daynav a,.daynav span.off{flex:none;min-width:64px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;"
+           "color:var(--sub);text-decoration:none;text-align:center;font-variant-numeric:tabular-nums}"
+           ".daynav span.off{color:var(--line)}"
+           ".daynav select{flex:1;min-width:0;padding:7px 8px;border:1px solid var(--line);border-radius:8px;background:var(--card);"
+           "color:var(--ink);font:inherit;font-weight:700;text-align:center;text-align-last:center}"
+           ".daynote{margin-top:8px;font-size:13px;color:var(--muted)} .daynote a{color:var(--sub)}")
+# 날짜 목록은 days.js 한 파일에만 둬요. 저장된 지난 페이지도 항상 최신 목록으로 이동할 수 있어요.
+DAYS_JS = """(function(){
+var el=document.getElementById('daynav');if(!el)return;
+var days=window.LEAGUE_DAYS||[],cur=el.dataset.day,base=el.dataset.base,home=el.dataset.home;
+if(!days.length)return;
+var latest=days[0],i=days.indexOf(cur),W='일월화수목금토';
+function p(s){var a=s.split('-');return[+a[0],+a[1],+a[2]];}
+function wd(s){var a=p(s);return W[new Date(a[0],a[1]-1,a[2]).getDay()];}
+function sh(s){var a=p(s);return a[1]+'/'+a[2];}
+function url(s){return s===latest?home:base+s+'.html';}
+function step(s,label,txt){
+  if(!s){var o=document.createElement('span');o.className='off';o.textContent=txt.replace('-','').trim();return o;}
+  var a=document.createElement('a');a.href=url(s);a.textContent=txt.replace('-',sh(s));a.setAttribute('aria-label',label+' '+sh(s));return a;}
+var older=i>=0?days[i+1]:null,newer=i>0?days[i-1]:null;
+var sel=document.createElement('select');sel.setAttribute('aria-label','날짜 선택');
+var g=null,gm='';
+days.forEach(function(s){
+  var a=p(s),m=a[0]+'년 '+a[1]+'월';
+  if(m!==gm){g=document.createElement('optgroup');g.label=m;sel.appendChild(g);gm=m;}
+  var o=document.createElement('option');o.value=s;o.textContent=a[1]+'월 '+a[2]+'일 ('+wd(s)+')'+(s===latest?' 최신':'');
+  if(s===cur)o.selected=true;g.appendChild(o);});
+sel.onchange=function(){location.href=url(sel.value);};
+el.textContent='';
+el.appendChild(step(older,'이전 기록','\u2039 -'));el.appendChild(sel);el.appendChild(step(newer,'다음 기록','- \u203A'));
+if(cur!==latest){var n=document.createElement('p');n.className='daynote';
+  n.innerHTML='이날 마감 때 저장한 기록이에요. <a href="'+home+'">최신 기록 보기</a>';el.after(n);}
+})();
+"""
+
+
+def nav_html(day, snapshot):
+    pre, base, home = ("../", "", "../index.html") if snapshot else ("", "days/", "index.html")
+    return (f'<nav class="daynav" id="daynav" data-day="{day}" data-base="{base}" data-home="{home}">'
+            f'<noscript><a href="{home}">최신 기록</a></noscript></nav><script src="{pre}days.js" defer></script>')
+
+
+def upgrade_page(page, day):
+    """예전 형식으로 저장된 날짜별 페이지를 지금 형식(날짜 표기, 날짜 이동 줄)으로 한 번만 맞춰요."""
+    if 'id="daynav"' in page:
+        return page
+    snapshot = "../index.html" in page
+    page = re.sub(r"<h2>지난 기록</h2>.*?<footer>", "<footer>", page, count=1, flags=re.S)
+    page = re.sub(r'(<span class="date">)(\d{4}-\d\d-\d\d)( 마감 기준)', lambda m: m.group(1) + kday(m.group(2), True) + m.group(3), page, count=1)
+    page = re.sub(r"(<footer>)(\d{4}-\d\d-\d\d)( 시작)", lambda m: m.group(1) + kday(m.group(2), True) + m.group(3), page, count=1)
+    page = re.sub(r"(?<=>)(\d\d)-(\d\d)(?=(?:부터)?<)", lambda m: f"{int(m.group(1))}/{int(m.group(2))}", page)
+    if snapshot:
+        page = page.replace("<title>AI 투자 리그</title>", f"<title>AI 투자 리그 {kday(day)}</title>", 1)
+    page = page.replace("</style>", NAV_CSS + "</style>", 1)
+    return page.replace("</header>", "</header>" + nav_html(day, snapshot), 1)
+
+
 def chart_svg(st):
     series = [(PLAYERS[pid]["name"], PLAYERS[pid]["color"], p["history"])
               for pid, p in st["players"].items()]
@@ -829,7 +900,7 @@ def chart_svg(st):
     for i in (0, n - 1):
         if i < len(dates):
             out.append(f'<text x="{x(i):.1f}" y="{H - 6}" class="ax" text-anchor="{"start" if i == 0 else "end"}">'
-                       f'{dates[i]["date"][5:]}</text>')
+                       f'{kday(dates[i]["date"])}</text>')
     for name, color, h in series:
         off = n - len(h)
         pts = " ".join(f"{x(i + off):.1f},{y((e['equity'] / START_CASH - 1) * 100):.1f}"
@@ -878,7 +949,7 @@ def render(st, data=None):
     mrows = [r for r in rows if PLAYERS[r[0]].get("model")]
     for rank, (pid, eq, tot, day) in enumerate(mrows, 1):
         pl = PLAYERS[pid]
-        since = st["players"][pid]["history"][0]["date"][5:] if st["players"][pid]["history"] else "-"
+        since = kday(st["players"][pid]["history"][0]["date"]) if st["players"][pid]["history"] else "-"
         battle.append(
             f'<tr><td class="rk">{rank}</td><td><span class="dot" style="background:{pl["color"]}"></span>{esc(pl["short"])}</td>'
             f'<td class="num muted">{since}부터</td>'
@@ -927,11 +998,13 @@ def render(st, data=None):
         pnl = f'{t["pnl"]:+.1f}%' if "pnl" in t else ""
         side_cls = "up" if t["side"] == "매수" else "down"
         trow_list.append(
-            f'<tr><td>{dt[5:]}</td><td>{esc(nm)}</td><td class="{side_cls}">{t["side"]}</td>'
+            f'<tr><td>{kday(dt)}</td><td>{esc(nm)}</td><td class="{side_cls}">{t["side"]}</td>'
             f'<td>{esc(UNIVERSE.get(t["ticker"], t["ticker"]))}</td><td class="num">{t["shares"]}주</td>'
             f'<td class="num hide-m">{("$" + format(t["price"], ",.2f")) if is_us(t["ticker"]) else format(t["price"], ",.0f")}</td>'
             f'<td class="num">{pnl}</td></tr>')
-    trows = "".join(trow_list) or '<tr><td colspan="7" class="muted">아직 체결된 거래가 없어요.</td></tr>'
+    thead = ('<tr><td class="muted">날짜</td><td class="muted">선수</td><td class="muted">구분</td><td class="muted">종목</td>'
+             '<td class="num muted">수량</td><td class="num muted hide-m">체결가</td><td class="num muted">손익</td></tr>')
+    trows = (thead + "".join(trow_list)) if trow_list else '<tr><td colspan="7" class="muted">아직 체결된 거래가 없어요.</td></tr>'
 
     u = st["usage"]
     days = len(st["bench"]["history"])
@@ -972,9 +1045,10 @@ details{{margin-top:10px;font-size:13px}} summary{{cursor:pointer;color:var(--su
 .note{{white-space:pre-wrap;margin-top:6px;color:var(--sub);font-size:12.5px}} .note b{{color:var(--ink)}} code{{font-size:.95em;background:var(--line);padding:0 3px;border-radius:3px}}
 .trades td{{font-size:13px;padding:7px 4px;white-space:nowrap}} .short{{display:none}}
 @media (max-width:520px){{.full{{display:none}} .short{{display:inline}} .hide-m{{display:none}} h1{{font-size:20px}}}}
+{NAV_CSS}
 footer{{margin-top:36px;padding-top:12px;border-top:3px solid var(--ink);font-size:12.5px;color:var(--muted)}}
 </style></head><body><div class="shell">
-<header><h1>AI 투자 리그</h1><span class="date">{d} 마감 기준</span></header>
+<header><h1>AI 투자 리그</h1><span class="date">{kday(d, True)} 마감 기준</span></header>{NAV_MARK}
 <p class="lede">가상 1천만 원으로 한국과 미국 주식을 굴린 지 {days}거래일째. 실제 돈은 들어가지 않아요.</p>
 <h2>순위</h2>
 <table><tr><td></td><td class="muted">선수</td><td class="num muted">총자산</td><td class="num muted">누적</td><td class="num muted">오늘</td></tr>{"".join(board)}</table>
@@ -982,7 +1056,7 @@ footer{{margin-top:36px;padding-top:12px;border-top:3px solid var(--ink);font-si
 <h2>수익률 추이</h2>{chart_svg(st)}<div class="legend">{legend}</div>
 <h2>선수별 오늘</h2><div class="cards">{"".join(cards)}</div>
 <h2>최근 거래</h2><table class="trades">{trows}</table>
-<footer>{st["start_date"]} 시작. 한국 종목은 다음 거래일 한국장 시가, 미국 종목은 그날 밤 미국장 시가에 체결. 미국 종목과 S&amp;P500은 원화로 환산.<br>
+<footer>{kday(st["start_date"], True)} 시작. 한국 종목은 다음 거래일 한국장 시가, 미국 종목은 그날 밤 미국장 시가에 체결. 미국 종목과 S&amp;P500은 원화로 환산.<br>
 한국 매도 시 약 0.2%, 미국 매수와 매도 시 각각 약 0.1% 비용 반영.<br>
 지금 크레딧 구간 사용액 약 ${month_cost(u, date.fromisoformat(st["last_date"])) if st["last_date"] else 0:.2f} / ${month_setting(date.fromisoformat(st["last_date"]), "budget", MONTHLY_BUDGET) if st["last_date"] else MONTHLY_BUDGET:.0f}.
 누적 ${u["cost_usd"]:.2f}, 입력 {u["input_tokens"]:,} 토큰, 출력 {u["output_tokens"]:,} 토큰, 웹 검색 {u["web_searches"]}회.</footer>
@@ -990,29 +1064,21 @@ footer{{margin-top:36px;padding-top:12px;border-top:3px solid var(--ink);font-si
     PAGE_PATH.parent.mkdir(parents=True, exist_ok=True)
     days_dir = PAGE_PATH.parent / "days"
     days_dir.mkdir(exist_ok=True)
-    past = sorted({f.stem for f in days_dir.glob("????-??-??.html")} | ({d} if d != "-" else set()), reverse=True)
-
-    def with_archive(page, snapshot_of=None):
-        pre = "" if snapshot_of else "days/"
-        months = {}
-        for x in past:
-            months.setdefault(x[:7], []).append(x)
-        open_month = (snapshot_of or (past[0] if past else ""))[:7]
-        groups = []
-        for m, xs in months.items():
-            links = "".join(f'<a href="{pre}{x}.html"{" class=on" if x == snapshot_of else ""}>{int(x[8:])}일</a>' for x in xs)
-            groups.append(f'<details{" open" if m == open_month else ""}><summary>{int(m[:4])}년 {int(m[5:])}월 '
-                          f'<span class="muted">{len(xs)}일</span></summary><nav class="days">{links}</nav></details>')
-        note = (f'<p class="muted" style="margin-bottom:8px">{snapshot_of} 마감 때 저장한 페이지예요. '
-                f'<a href="../index.html">오늘 페이지로</a></p>') if snapshot_of else ""
-        nav = f'<h2>지난 기록</h2>{note}{"".join(groups)}'
-        css = ('.days{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 4px}.days a{font-size:13px;padding:4px 10px;border:1px solid var(--line);'
-               'border-radius:999px;color:var(--sub);text-decoration:none}.days a.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}')
-        return page.replace("</style>", css + "</style>", 1).replace("<footer>", nav + "<footer>", 1)
-
-    PAGE_PATH.write_text(with_archive(html))
-    if d != "-":
-        (days_dir / f"{d}.html").write_text(with_archive(html, d))  # 같은 날 다시 그리면 최신으로 갱신
+    live = PAGE_PATH.name == "index.html"      # dry-run은 날짜별 기록을 건드리지 않아요
+    PAGE_PATH.write_text(html.replace(NAV_MARK, nav_html(d, False) if live else "", 1))
+    if not live:
+        return
+    if d != "-":                               # 같은 날 다시 그리면 최신으로 갱신
+        (days_dir / f"{d}.html").write_text(
+            html.replace(NAV_MARK, nav_html(d, True), 1)
+                .replace("<title>AI 투자 리그</title>", f"<title>AI 투자 리그 {kday(d)}</title>", 1))
+    for f in days_dir.glob("????-??-??.html"):
+        old = f.read_text()
+        new = upgrade_page(old, f.stem)
+        if new != old:
+            f.write_text(new)
+    past = sorted((f.stem for f in days_dir.glob("????-??-??.html")), reverse=True)
+    (PAGE_PATH.parent / "days.js").write_text(f"window.LEAGUE_DAYS={json.dumps(past)};\n" + DAYS_JS)
 
 
 # ---------------------------------------------------------------------------
